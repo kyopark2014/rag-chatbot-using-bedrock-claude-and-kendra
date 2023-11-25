@@ -22,8 +22,6 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from botocore.config import Config
 
-from langchain.vectorstores.faiss import FAISS
-from langchain.vectorstores.opensearch_vector_search import OpenSearchVectorSearch
 from langchain.embeddings import BedrockEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.chains import LLMChain
@@ -38,19 +36,14 @@ bedrock_region = os.environ.get('bedrock_region', 'us-west-2')
 kendra_region = os.environ.get('kendra_region', 'us-west-2')
 modelId = os.environ.get('model_id', 'anthropic.claude-v2')
 print('model_id: ', modelId)
-isReady = False   
 isDebugging = False
-rag_type = os.environ.get('rag_type', 'faiss')
+rag_type = os.environ.get('rag_type', 'kendra')
 rag_method = os.environ.get('rag_method', 'RetrievalQA') # RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
 
-opensearch_account = os.environ.get('opensearch_account')
-opensearch_passwd = os.environ.get('opensearch_passwd')
 enableReference = os.environ.get('enableReference', 'false')
 debugMessageMode = os.environ.get('debugMessageMode', 'false')
 top_k = 8
-opensearch_url = os.environ.get('opensearch_url')
 path = os.environ.get('path')
-useMultiProcessing = os.environ.get('useMultiProcessing', 'false')
 
 kendraIndex = os.environ.get('kendraIndex')
 roleArn = os.environ.get('roleArn')
@@ -74,14 +67,7 @@ boto3_bedrock = boto3.client(
 HUMAN_PROMPT = "\n\nHuman:"
 AI_PROMPT = "\n\nAssistant:"
 def get_parameter(modelId):
-    if modelId == 'amazon.titan-tg1-large' or modelId == 'amazon.titan-tg1-xlarge': 
-        return {
-            "maxTokenCount":1024,
-            "stopSequences":[],
-            "temperature":0,
-            "topP":0.9
-        }
-    elif modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+    if modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
         return {
             "max_tokens_to_sample":8191, # 8k
             "temperature":0.1,
@@ -98,13 +84,6 @@ llm = Bedrock(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
     model_kwargs=parameters)
-
-# embedding for RAG
-bedrock_embeddings = BedrockEmbeddings(
-    client=boto3_bedrock,
-    region_name = bedrock_region,
-    model_id = 'amazon.titan-embed-text-v1' 
-)
 
 map_chain = dict() # For RAG
 map_chat = dict() # For general conversation  
@@ -171,20 +150,8 @@ def get_prompt_template(query, convType):
             </question>
             
             Assistant:"""
-        elif convType=='qa' and rag_type=='faiss' and isReady==False: # for General Conversation
-            prompt_template = """\n\nHuman: 다음의 <history>는 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
 
-            <history>
-            {history}
-            </history>
-
-            <question>            
-            {input}
-            </question>
-            
-            Assistant:"""
-
-        elif (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and rag_type=='faiss' and isReady):  
+        elif (convType=='qa'):  # for RAG
             # for RAG, context and question
             prompt_template = """\n\nHuman: 다음의 <context>를 참조하여 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
         
@@ -198,126 +165,6 @@ def get_prompt_template(query, convType):
 
             Assistant:"""
                 
-        elif convType == "translation":  # for translation, input
-            prompt_template = """\n\nHuman: 다음의 <translation>를 영어로 번역하세요. 머리말은 건너뛰고 본론으로 바로 들어가주세요. 또한 결과는 <result> tag를 붙여주세요.
-
-            <translation>
-            {input}
-            </translation>
-                        
-            Assistant:"""
-
-        elif convType == "sentiment":  # for sentiment, input
-            prompt_template = """\n\nHuman: 아래의 <example> review와 Extracted Topic and sentiment 인 <result>가 있습니다.
-            <example>
-            객실은 작지만 깨끗하고 편안합니다. 프론트 데스크는 정말 분주했고 체크인 줄도 길었지만, 직원들은 프로페셔널하고 매우 유쾌하게 각 사람을 응대했습니다. 우리는 다시 거기에 머물것입니다.
-            </example>
-            <result>
-            청소: 긍정적, 
-            서비스: 긍정적
-            </result>
-
-            아래의 <review>에 대해서 위의 <result> 예시처럼 Extracted Topic and sentiment 을 만들어 주세요..
-
-            <review>
-            {input}
-            </review>
-            Assistant:"""
-
-        elif convType == "extraction":  # information extraction
-            prompt_template = """\n\nHuman: 다음 텍스트에서 이메일 주소를 정확하게 복사하여 한 줄에 하나씩 적어주세요. 입력 텍스트에 정확하게 쓰여있는 이메일 주소만 적어주세요. 텍스트에 이메일 주소가 없다면, "N/A"라고 적어주세요. 또한 결과는 <result> tag를 붙여주세요.
-
-            <text>
-            {input}
-            </text>
-
-            Assistant:"""
-
-        elif convType == "pii":  # removing PII(personally identifiable information) containing name, phone number, address
-            prompt_template = """\n\nHuman: 아래의 <text>에서 개인식별정보(PII)를 모두 제거하여 외부 계약자와 안전하게 공유할 수 있도록 합니다. 이름, 전화번호, 주소, 이메일을 XXX로 대체합니다. 또한 결과는 <result> tag를 붙여주세요.
-            
-            <text>
-            {input}
-            </text>
-
-            Assistant:"""
-
-        elif convType == "grammar":  # Checking Grammatical Errors
-            prompt_template = """\n\nHuman: 다음의 <article>에서 문장의 오류를 찾아서 설명하고, 오류가 수정된 문장을 답변 마지막에 추가하여 주세요.
-
-            <article>
-            {input}
-            </article>
-            
-            Assistant: """
-
-        elif convType == "step-by-step":  # compelex question 
-            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
-
-            {input}
-
-            Assistant: 단계별로 생각할까요?
-
-            Human: 예, 그렇게하세요.
-            
-            Assistant:"""
-
-        elif convType == "like-child":  # Child Conversation (few shot)
-            prompt_template = """\n\nHuman: 다음 대화를 완성하기 위해 "A"로 말하는 다음 줄을 작성하세요. Assistant는 유치원 선생님처럼 대화를 합니다.
-            
-            Q: 이빨 요정은 실제로 있을까?
-            A: 물론이죠, 오늘 밤 당신의 이를 감싸서 베개 밑에 넣어두세요. 아침에 뭔가 당신을 기다리고 있을지도 모릅니다.
-            Q: {input}
-
-            Assistant:"""      
-
-        elif convType == "funny": # for free conversation
-            prompt_template = """\n\nHuman: 다음의 <history>는 Human과 Assistant의 친근한 이전 대화입니다. 모든 대화는 반말로하여야 합니다. Assistant의 이름은 서서이고 10살 여자 어린이 상상력이 풍부하고 재미있는 대화를 합니다. 때로는 바보같은 답변을 해서 재미있게 해줍니다.
-
-            <history>
-            {history}
-            </history>
-
-            <question>            
-            {input}
-            </question>
-            
-            Assistant:"""     
-
-        elif convType == "get-weather":  # getting weather (function calling)
-            prompt_template = """\n\nHuman: In this environment you have access to a set of tools you can use to answer the user's question.
-
-            You may call them like this. Only invoke one function at a time and wait for the results before invoking another function:
-            
-            <function_calls>
-            <invoke>
-            <tool_name>$TOOL_NAME</tool_name>
-            <parameters>
-            <$PARAMETER_NAME>$PARAMETER_VALUE</$PARAMETER_NAME>
-            ...
-            </parameters>
-            </invoke>
-            </function_calls>
-
-            Here are the tools available:
-            <tools>
-            {tools_string}
-            </tools>
-
-            Human:
-            {user_input}
-
-            Assistant:"""                  
-                
-        else:
-            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant는 모르는 질문을 받으면 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다. 
-        
-            <question>            
-            {question}
-            </question>
-
-            Assistant:"""
-
     else:  # English
         if convType == "normal": # for General Conversation
             prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
@@ -332,20 +179,7 @@ def get_prompt_template(query, convType):
 
             Assistant:"""
 
-        elif convType=='qa' and rag_type=='faiss' and isReady==False: # for General Conversation
-            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
-
-            <history>
-            {history}
-            </history>
-            
-            <question>            
-            {input}
-            </question>
-
-            Assistant:"""           
-
-        elif (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and rag_type=='faiss' and isReady):  # for RAG
+        elif (convType=='qa'):  # for RAG
             prompt_template = """\n\nHuman: Here is pieces of context, contained in <context> tags. Provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
             
             <context>
@@ -358,125 +192,7 @@ def get_prompt_template(query, convType):
 
             Assistant:"""
 
-        elif convType=="translation": 
-            prompt_template = """\n\nHuman: Here is an article, contained in <article> tags. Translate the article to Korean. Put it in <result> tags.
-            
-            <article>
-            {input}
-            </article>
-                        
-            Assistant:"""
-        
-        elif convType == "sentiment":  # for sentiment, input
-            prompt_template = """\n\nHuman: Here is <example> review and extracted topics and sentiments as <result>.
-
-            <example>
-            The room was small but clean and comfortable. The front desk was really busy and the check-in line was long, but the staff were professional and very pleasant with each person they helped. We will stay there again.
-            </example>
-
-            <result>
-            Cleanliness: Positive, 
-            Service: Positive
-            </result>
-
-            <review>
-            {input}
-            </review>
-            
-            Assistant:"""
-
-        elif convType == "pii":  # removing PII(personally identifiable information) containing name, phone number, address
-            prompt_template = """\n\nHuman: We want to de-identify some text by removing all personally identifiable information from this text so that it can be shared safely with external contractors.
-            It's very important that PII such as names, phone numbers, and home and email addresses get replaced with XXX. Put it in <result> tags.
-
-            Here is the text, inside <text></text> XML tags.
-
-            <text>
-            {input}
-            </text>
-
-            Assistant:"""
-
-        elif convType == "extraction":  # for sentiment, input
-            prompt_template = """\n\nHuman: Please precisely copy any email addresses from the following text and then write them, one per line.  Only write an email address if it's precisely spelled out in the input text.  If there are no email addresses in the text, write "N/A".  Do not say anything else.  Put it in <result> tags.
-
-            {input}
-
-            Assistant:"""
-
-        elif convType == "grammar":  # Checking Grammatical Errors
-            prompt_template = """\n\nHuman: Here is an article, contained in <article> tags:
-
-            <article>
-            {input}
-            </article>
-
-            Please identify any grammatical errors in the article. Also, add the fixed article at the end of answer.
-            
-            Assistant: """
-
-        elif convType == "step-by-step":  # compelex question 
-            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
-            
-            {input}
-
-            Assistant: Can I think step by step?
-
-            Human: Yes, please do.
-
-            Assistant:"""
-        
-        elif convType == "like-child":  # Child Conversation (few shot)
-            prompt_template = """\n\nHuman: Please complete the conversation by writing the next line, speaking as "A". You will be acting as a kindergarten teacher.
-
-            Q: Is the tooth fairy real?
-            A: Of course, sweetie. Wrap up your tooth and put it under your pillow tonight. There might be something waiting for you in the morning.
-            Q: {input}
-
-            Assistant:"""       
-
-        elif convType == "funny": # for free conversation
-            prompt_template = """\n\nHuman: 다음의 <history>는 Human과 Assistant의 친근한 이전 대화입니다. Assistant의 이름은 서서이고 10살 여자 어린이입니다. 상상력이 풍부하고 재미있는 대화를 잘합니다. 때론 바보같은 답변을 합니다.
-
-            <history>
-            {history}
-            </history>
-
-            <question>            
-            {input}
-            </question>
-            
-            Assistant:"""     
-
-        else: # normal
-            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor named Seoyeon.
-
-            Human: {input}
-
-            Assistant:"""
-
-            # Use the following pieces of context to provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
-            # The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
-    
     return PromptTemplate.from_template(prompt_template)
-
-def store_document_for_faiss(docs, vectorstore_faiss):
-    print('store document into faiss')    
-    vectorstore_faiss.add_documents(docs)       
-    print('uploaded into faiss')
-
-def store_document_for_opensearch(docs, userId, requestId):
-    print('store document into opensearch')
-    new_vectorstore = OpenSearchVectorSearch(
-        index_name="rag-index-"+userId+'-'+requestId,
-        is_aoss = False,
-        #engine="faiss",  # default: nmslib
-        embedding_function = bedrock_embeddings,
-        opensearch_url = opensearch_url,
-        http_auth=(opensearch_account, opensearch_passwd),
-    )
-    new_vectorstore.add_documents(docs)    
-    print('uploaded into opensearch')
 
 # store document into Kendra
 def store_document_for_kendra(path, s3_file_name, requestId):
@@ -671,23 +387,9 @@ def load_chat_history(userId, allowTime, convType):
                 print('Human: ', text)
                 print('Assistant: ', msg)        
 
-            #if (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and #rag_type=='faiss' and isReady):
-            #    memory_chain.chat_memory.add_user_message(text)
-            #    memory_chain.chat_memory.add_ai_message(msg)           
-            #elif convType=='qa' and rag_type=='faiss' and isReady==False:
-            #    memory_chain.chat_memory.add_user_message(text)
-            #    memory_chain.chat_memory.add_ai_message(msg)  
-
-            #    memory_chat.save_context({"input": text}, {"output": msg})
-            #else:
-            #    memory_chat.save_context({"input": text}, {"output": msg})       
-
             if convType=='qa':
                 memory_chain.chat_memory.add_user_message(text)
-                memory_chain.chat_memory.add_ai_message(msg)        
-                
-                if rag_type=='faiss' and isReady==False:
-                    memory_chat.save_context({"input": text}, {"output": msg})
+                memory_chain.chat_memory.add_ai_message(msg)                        
             else:
                 memory_chat.save_context({"input": text}, {"output": msg})   
                 
@@ -950,7 +652,7 @@ def retrieve_from_Kendra(query, top_k):
                 else:
                     relevant_docs.append(doc)
             
-        else:  # falback using query API
+        else:  # fallback using query API
             print('No result for Retrieve API!')
             try:
                 resp =  kendra_client.query(
@@ -1003,193 +705,51 @@ def retrieve_from_Kendra(query, top_k):
 
 def get_reference(docs, rag_method, rag_type):
     if rag_method == 'RetrievalQA' or rag_method == 'ConversationalRetrievalChain':
-        if rag_type == 'kendra':
-            reference = "\n\nFrom\n"
-            for i, doc in enumerate(docs):
-                name = doc.metadata['title']     
+        reference = "\n\nFrom\n"
+        for i, doc in enumerate(docs):
+            name = doc.metadata['title']     
 
-                uri = ""
-                if ("document_attributes" in doc.metadata) and ("_source_uri" in doc.metadata['document_attributes']):
-                    uri = doc.metadata['document_attributes']['_source_uri']
+            uri = ""
+            if ("document_attributes" in doc.metadata) and ("_source_uri" in doc.metadata['document_attributes']):
+                uri = doc.metadata['document_attributes']['_source_uri']
                                     
-                if ("document_attributes" in doc.metadata) and ("_excerpt_page_number" in doc.metadata['document_attributes']):
-                    page = doc.metadata['document_attributes']['_excerpt_page_number']
-                    reference = reference + f'{i+1}. {page}page in <a href={uri} target=_blank>{name}</a>\n'
-                else:
-                    reference = reference + f'{i+1}. <a href={uri} target=_blank>{name}</a>\n'
-        else:
-            reference = "\n\nFrom\n"
-            for i, doc in enumerate(docs):
-                print(f'## Document {i+1}: {doc}')
-
-                name = doc.metadata['name']
-                page = doc.metadata['page']
-                uri = doc.metadata['uri']
-
-                reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name}</a>\n"
+            if ("document_attributes" in doc.metadata) and ("_excerpt_page_number" in doc.metadata['document_attributes']):
+                page = doc.metadata['document_attributes']['_excerpt_page_number']
+                reference = reference + f'{i+1}. {page}page in <a href={uri} target=_blank>{name}</a>\n'
+            else:
+                reference = reference + f'{i+1}. <a href={uri} target=_blank>{name}</a>\n'
 
     elif rag_method == 'RetrievalPrompt':
-        if rag_type == 'kendra':
-            reference = "\n\nFrom\n"
-            for i, doc in enumerate(docs):
-                if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
-                        uri = doc['metadata']['source']
-                        name = doc['metadata']['title']
-                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>\n"
-                else: # Query
-                    confidence = doc['confidence']
-                    if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
-                        excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
-                        reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
-                    else:
-                        uri = ""
-                        if "title" in doc['metadata']:
-                            #print('metadata: ', json.dumps(doc['metadata']))
-                            name = doc['metadata']['title']
-                            if name: 
-                                uri = path+parse.quote(name)
-
-                        page = ""
-                        if "document_attributes" in doc['metadata']:
-                            if "_excerpt_page_number" in doc['metadata']['document_attributes']:
-                                page = doc['metadata']['document_attributes']['_excerpt_page_number']
-                                                
-                        if page: 
-                            reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
-                        elif uri:
-                            reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"
-        elif rag_type == 'opensearch':
-            reference = "\n\nFrom\n"
-            for i, doc in enumerate(docs):
-                print(f'## Document {i+1}: {doc}')
-                
-                page = ""
-                if "document_attributes" in doc['metadata']:
-                    if "_excerpt_page_number" in doc['metadata']['document_attributes']:
-                        page = doc['metadata']['document_attributes']['_excerpt_page_number']
-                uri = doc['metadata']['source']
-                name = doc['metadata']['title']
-
-                reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name}</a>\n"
-        
-        elif rag_type == 'faiss':
-            reference = "\n\nFrom\n"
-            for i, doc in enumerate(docs):
-                print(f'## Document {i+1}: {doc}')
-                
-                page = ""
-                if "document_attributes" in doc['metadata']:
-                    if "_excerpt_page_number" in doc['metadata']['document_attributes']:
-                        page = doc['metadata']['document_attributes']['_excerpt_page_number']
-                uri = doc['metadata']['source']
-                name = doc['metadata']['title']
+        reference = "\n\nFrom\n"
+        for i, doc in enumerate(docs):
+            if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
+                    uri = doc['metadata']['source']
+                    name = doc['metadata']['title']
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>\n"
+            else: # Query
                 confidence = doc['confidence']
+                if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
+                    excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
+                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
+                else:
+                    uri = ""
+                    if "title" in doc['metadata']:
+                        #print('metadata: ', json.dumps(doc['metadata']))
+                        name = doc['metadata']['title']
+                        if name: 
+                            uri = path+parse.quote(name)
 
-                if page: 
-                    reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
-                elif uri:
-                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                    page = ""
+                    if "document_attributes" in doc['metadata']:
+                        if "_excerpt_page_number" in doc['metadata']['document_attributes']:
+                            page = doc['metadata']['document_attributes']['_excerpt_page_number']
+                                                
+                    if page: 
+                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                    elif uri:
+                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"
         
     return reference
-
-def retrieve_from_vectorstore(query, top_k, rag_type):
-    print('query: ', query)
-
-    relevant_docs = []
-    if rag_type == 'faiss':
-        #relevant_documents = vectorstore_faiss.similarity_search(query)
-        #query_embedding = bedrock_embeddings.embed_query(query)
-        #print('query_embedding: ', query_embedding)
-        #relevant_documents = vectorstore_faiss.similarity_search_by_vector(query_embedding)
-
-        relevant_documents = vectorstore_faiss.similarity_search_with_score(query)
-        
-        relevant_documents1 = vectorstore_faiss.similarity_search_with_relevance_scores(query)
-        print('relevant_documents1: ',relevant_documents1)
-        
-        for i, document in enumerate(relevant_documents):
-            if i>=top_k:
-                break
-            #print('document.page_content:', document.page_content)
-            #print('document.metadata:', document.metadata)
-            print(f'## Document {i+1}: {document}')
-
-            name = document[0].metadata['name']
-            page = document[0].metadata['page']
-            uri = document[0].metadata['uri']
-            confidence = document[1]
-            
-            if page:
-                doc_info = {
-                    "rag_type": rag_type,
-                    #"api_type": apiType,
-                    "confidence": confidence,
-                    "metadata": {
-                        #"type": query_result_type,
-                        #"document_id": document_id,
-                        "source": uri,
-                        "title": name,
-                        "excerpt": document[0].page_content,
-                        "document_attributes": {
-                            "_excerpt_page_number": page
-                        }
-                    },
-                    #"query_id": query_id,
-                    #"feedback_token": feedback_token
-                }
-
-            else: 
-                doc_info = {
-                    "rag_type": rag_type,
-                    #"api_type": apiType,
-                    "confidence": confidence,
-                    "metadata": {
-                        #"type": query_result_type,
-                        #"document_id": document_id,
-                        "source": uri,
-                        "title": name,
-                        "excerpt": document[0].page_content,
-                    },
-                    #"query_id": query_id,
-                    #"feedback_token": feedback_token
-                }
-            
-            relevant_docs.append(doc_info)
-            
-    elif rag_type == 'opensearch':
-        relevant_documents = vectorstore_opensearch.similarity_search(query)
-
-        for i, document in enumerate(relevant_documents):
-            if i>=top_k:
-                break
-            #print('document.page_content:', document.page_content)
-            #print('document.metadata:', document.metadata)
-            print(f'## Document {i+1}: {document}')
-
-            name = document.metadata['name']
-            page = document.metadata['page']
-            uri = document.metadata['uri']
-
-            doc_info = {
-                "rag_type": rag_type,
-                #"api_type": apiType,
-                #"confidence": confidence,
-                "metadata": {
-                    #"type": query_result_type,
-                    #"document_id": document_id,
-                    "source": uri,
-                    "title": name,
-                    "excerpt": document.page_content,
-                    "document_attributes": {
-                        "_excerpt_page_number": page
-                    }
-                },
-                #"query_id": query_id,
-                #"feedback_token": feedback_token
-            }
-            relevant_docs.append(doc_info)
-
-    return relevant_docs
 
 from langchain.schema import BaseMessage
 _ROLE_MAP = {"human": "\n\nHuman: ", "ai": "\n\nAssistant: "}
@@ -1252,24 +812,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         PROMPT = get_prompt_template(revised_question, convType)
         #print('PROMPT: ', PROMPT)
 
-        if rag_type=='kendra':
-            retriever = kendraRetriever
-        elif rag_type=='opensearch':
-            retriever = vectorstore_opensearch.as_retriever(
-                search_type="similarity", 
-                search_kwargs={
-                    #"k": 3, 'score_threshold': 0.8
-                    "k": top_k
-                }
-            )
-        elif rag_type=='faiss':
-            retriever = vectorstore_faiss.as_retriever(
-                search_type="similarity", 
-                search_kwargs={
-                    #"k": 3, 'score_threshold': 0.8
-                    "k": top_k
-                }
-            )
+        retriever = kendraRetriever
 
         qa = RetrievalQA.from_chain_type(
             llm=llm,
@@ -1291,25 +834,8 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
 
     elif rag_method == 'ConversationalRetrievalChain': # ConversationalRetrievalChain
         PROMPT = get_prompt_template(text, convType)
-        if rag_type == 'kendra':
-            qa = create_ConversationalRetrievalChain(PROMPT, retriever=kendraRetriever)            
-        elif rag_type == 'opensearch': # opensearch
-            vectorstoreRetriever = vectorstore_opensearch.as_retriever(
-                search_type="similarity", 
-                search_kwargs={
-                    "k": 5
-                }
-            )
-            qa = create_ConversationalRetrievalChain(PROMPT, retriever=vectorstoreRetriever)
-        elif rag_type == 'faiss': # faiss
-            vectorstoreRetriever = vectorstore_faiss.as_retriever(
-                search_type="similarity", 
-                search_kwargs={
-                    "k": 5
-                }
-            )
-            qa = create_ConversationalRetrievalChain(PROMPT, retriever=vectorstoreRetriever)
-        
+        qa = create_ConversationalRetrievalChain(PROMPT, retriever=kendraRetriever)            
+
         result = qa({"question": text})
         
         msg = result['answer']
@@ -1329,10 +855,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         PROMPT = get_prompt_template(revised_question, convType)
         #print('PROMPT: ', PROMPT)
 
-        if rag_type == 'kendra':
-            relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
-        else:
-            relevant_docs = retrieve_from_vectorstore(query=revised_question, top_k=top_k, rag_type=rag_type)
+        relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
         print('relevant_docs: ', json.dumps(relevant_docs))
 
         relevant_context = ""
@@ -1414,8 +937,8 @@ def getResponse(connectionId, jsonBody):
     convType = jsonBody['convType']  # conversation type
     print('Conversation Type: ', convType)
 
-    global llm, modelId, vectorstore_opensearch, vectorstore_faiss, enableReference, rag_type
-    global parameters, map_chain, map_chat, memory_chat, memory_chain, isReady, debugMessageMode
+    global llm, modelId, enableReference, rag_type, conversation
+    global parameters, map_chain, map_chat, memory_chat, memory_chain, debugMessageMode
     
     if "rag_type" in jsonBody:
         rag_type = jsonBody['rag_type']  # RAG type
@@ -1427,32 +950,15 @@ def getResponse(connectionId, jsonBody):
             memory_chain = map_chain[userId]
             print('memory_chain exist. reuse it!')
         else: 
-            # memory_chain = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
             memory_chain = ConversationBufferWindowMemory(memory_key="chat_history", output_key='answer', return_messages=True, k=5)
             map_chain[userId] = memory_chain
             print('memory_chain does not exist. create new one!')
-
-        if rag_type=='faiss' and isReady==False:        
-            if userId in map_chat:  
-                memory_chat = map_chat[userId]
-                print('memory_chat exist. reuse it!')    
-            else: 
-                # memory_chat = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-                memory_chat = ConversationBufferWindowMemory(human_prefix='Human', ai_prefix='Assistant', k=20)
-                #from langchain.memory import ConversationSummaryBufferMemory
-                #memory_chat = ConversationSummaryBufferMemory(llm=llm, max_token_limit=1024,
-                #    human_prefix='Human', ai_prefix='Assistant') #Maintains a summary of previous messages
-   
-            map_chat[userId] = memory_chat
-            print('memory_chat does not exist. create new one!')                        
-            conversation = ConversationChain(llm=llm, verbose=False, memory=memory_chat)
 
     else:    # normal 
         if userId in map_chat:  
             memory_chat = map_chat[userId]
             print('memory_chat exist. reuse it!')
         else:
-            # memory_chat = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
             memory_chat = ConversationBufferWindowMemory(human_prefix='Human', ai_prefix='Assistant', k=20)
             map_chat[userId] = memory_chat
             print('memory_chat does not exist. create new one!')        
@@ -1460,22 +966,6 @@ def getResponse(connectionId, jsonBody):
         
     allowTime = getAllowTime()
     load_chat_history(userId, allowTime, convType)
-
-    # rag sources
-    if convType == 'qa' and rag_type == 'opensearch':
-        vectorstore_opensearch = OpenSearchVectorSearch(
-            #index_name = "rag-index-*", # all
-            index_name = 'rag-index-'+userId+'-*',
-            is_aoss = False,
-            ef_search = 1024, # 512(default)
-            m=48,
-            #engine="faiss",  # default: nmslib
-            embedding_function = bedrock_embeddings,
-            opensearch_url=opensearch_url,
-            http_auth=(opensearch_account, opensearch_passwd), # http_auth=awsauth,
-        )
-    elif convType == 'qa' and rag_type == 'faiss':
-        print('isReady = ', isReady)
 
     start = int(time.time())    
 
@@ -1511,15 +1001,6 @@ def getResponse(connectionId, jsonBody):
             elif text == 'disableReference':
                 enableReference = 'false'
                 msg  = "Reference is disabled"
-            elif text == 'useOpenSearch':
-                rag_type = 'opensearch'
-                msg  = "OpenSearch is selected for Knowledge Database"
-            elif text == 'useFaiss':
-                rag_type = 'faiss'
-                msg  = "Faiss is selected for Knowledge Database"
-            elif text == 'useKendra':
-                rag_type = 'kendra'
-                msg  = "Kendra is selected for Knowledge Database"
             elif text == 'enableDebug':
                 debugMessageMode = 'true'
                 msg  = "Debug messages will be delivered to the client."
@@ -1539,29 +1020,9 @@ def getResponse(connectionId, jsonBody):
                 msg  = "The chat memory was intialized in this session."
             else:          
                 if convType == 'qa':   # question & answering
-                    print(f'rag_type: {rag_type}, rag_method: {rag_method}')
-                          
-                    if rag_type == 'faiss' and isReady==False:                               
-                        msg = get_answer_from_conversation(text, conversation, convType, connectionId, requestId)      
-
-                        memory_chain.chat_memory.add_user_message(text)  # append new diaglog
-                        memory_chain.chat_memory.add_ai_message(msg)
-                    else: 
-                        msg = get_answer_using_RAG(text, rag_type, convType, connectionId, requestId)     
-                
-                elif convType == 'normal' or convType == 'funny':      # normal
-                    msg = get_answer_from_conversation(text, conversation, convType, connectionId, requestId)
-                
-                elif convType == 'none':   # no prompt
-                    try: 
-                        msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
-                    except Exception:
-                        err_msg = traceback.format_exc()
-                        print('error message: ', err_msg)        
-
-                        sendErrorMessage(connectionId, requestId, err_msg)    
-                        raise Exception ("Not able to request to LLM")    
-                else: 
+                    print(f'rag_type: {rag_type}, rag_method: {rag_method}')                          
+                    msg = get_answer_using_RAG(text, rag_type, convType, connectionId, requestId)                     
+                else: # general conversation
                     msg = get_answer_from_PROMPT(text, convType, connectionId, requestId)
                 
         elif type == 'document':
@@ -1603,53 +1064,10 @@ def getResponse(connectionId, jsonBody):
                                 
             if convType == 'qa':
                 start_time = time.time()
-                if useMultiProcessing == 'false':                    
-                    print('rag_type: ', rag_type)                
-                    if rag_type=='kendra':      
-                        print('upload to kendra: ', object)           
-                        store_document_for_kendra(path, object, requestId)  # store the object into kendra
-                                        
-                    else:
-                        if file_type == 'pdf' or file_type == 'txt' or file_type == 'csv':
-                            if rag_type == 'faiss':
-                                if isReady == False:   
-                                    embeddings = bedrock_embeddings
-                                    vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
-                                            docs,  # documents
-                                            embeddings  # embeddings
-                                    )
-                                    isReady = True
-                                else:
-                                    store_document_for_faiss(doc, vectorstore_faiss)
+                print('rag_type: ', rag_type)                
+                print('upload to kendra: ', object)           
+                store_document_for_kendra(path, object, requestId)  # store the object into kendra
                                                                 
-                            elif rag_type == 'opensearch':    
-                                store_document_for_opensearch(docs, userId, requestId)
-                    
-                else:
-                    from multiprocessing import Process
-                    p1 = Process(target=store_document_for_kendra, args=(path, object, requestId,))
-                    p1.start(); p1.join()
-                    
-                    if file_type == 'pdf' or file_type == 'txt' or file_type == 'csv':
-                        # opensearch
-                        p2 = Process(target=store_document_for_opensearch, args=(docs, userId, requestId,))
-                        p2.start(); p2.join()
-
-                        # faiss
-                        if isReady == False:   
-                            embeddings = bedrock_embeddings
-                            vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
-                                docs,  # documents
-                                embeddings  # embeddings
-                            )
-                            isReady = True
-                        else: 
-                            #p3 = Process(target=store_document_for_faiss, args=(docs, vectorstore_faiss))
-                            #p3.start(); p3.join()
-                            vectorstore_faiss.add_documents(docs)       
-                        
-                print('processing time: ', str(time.time() - start_time))
-                        
         elapsed_time = int(time.time()) - start
         print("total run time(sec): ", elapsed_time)
         
