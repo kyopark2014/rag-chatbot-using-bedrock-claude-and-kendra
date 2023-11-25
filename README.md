@@ -2,8 +2,7 @@
 
 기업의 데이터를 활용하여 질문과 답변을 수행하는 한국어 Chatbot을 RAG를 이용해 구현합니다. 이때 한국어 LLM으로는 Amazon Bedrock의 Claude 모델을 사용하고, 지식 저장소로 Amazon Kendra를 이용합니다. 
 
-<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df8baed8-d069-4952-b200-22234e2edf87" width="800">
-
+<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
 
 문서파일을 업로드하여 Kendra에 저장하는 과정은 아래와 같습니다.
 
