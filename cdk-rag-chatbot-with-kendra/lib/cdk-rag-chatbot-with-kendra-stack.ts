@@ -18,11 +18,11 @@ const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
 const model_id = "anthropic.claude-v2";
-const projectName = `korean-chatbot`;
+const projectName = `rag-chatbot-with-kendra`;
 
 const bucketName = `storage-for-${projectName}-${region}`;
 const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
-const kendra_region = "us-east-1";
+const kendra_region = "ap-northeast-1";
 
 const rag_type = 'kendra';  // faiss, opensearch, kendra
 const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
