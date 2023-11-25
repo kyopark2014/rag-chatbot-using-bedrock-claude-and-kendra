@@ -248,17 +248,9 @@ function onSend(e) {
         let requestId = uuidv4();
         addSentMessage(requestId, timestr, message.value);
 
-        if(conversationType=='qa-kendra') {
+        if(conversationType=='qa') {
             convType = 'qa',
             rag_type = 'kendra'
-        }
-        else if(conversationType=='qa-opensearch') {
-            convType = 'qa',
-            rag_type = 'opensearch'
-        }
-        else if(conversationType=='qa-faiss') {
-            convType = 'qa',
-            rag_type = 'faiss'
         }
         else {
             convType = conversationType,
@@ -528,17 +520,9 @@ attachFile.addEventListener('click', function(){
                         if (xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status == 200 ) {
                             console.log(xmlHttp.responseText);
 
-                            if(conversationType=='qa-kendra') {
+                            if(conversationType=='qa') {
                                 convType = 'qa',
                                 rag_type = 'kendra'
-                            }
-                            else if(conversationType=='qa-opensearch') {
-                                convType = 'qa',
-                                rag_type = 'opensearch'
-                            }
-                            else if(conversationType=='qa-faiss') {
-                                convType = 'qa',
-                                rag_type = 'faiss'
                             }
                             else {
                                 convType = conversationType,
