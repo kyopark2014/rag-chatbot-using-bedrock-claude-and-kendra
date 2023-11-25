@@ -69,10 +69,10 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
     }
 
     // copy web application files into s3 bucket
-    new s3Deploy.BucketDeployment(this, `upload-HTML-for-${projectName}`, {
-      sources: [s3Deploy.Source.asset("../html")],
-      destinationBucket: s3Bucket,
-    });
+    //new s3Deploy.BucketDeployment(this, `upload-HTML-for-${projectName}`, {
+    //  sources: [s3Deploy.Source.asset("../html")],
+    //  destinationBucket: s3Bucket,
+    //});
 
     new cdk.CfnOutput(this, `UploadFAQContents-for-${projectName}`, {
       value: 'aws s3 cp ../contents/faq ' + 's3://' + s3Bucket.bucketName + '/contents/faq --recursive',
