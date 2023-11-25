@@ -42,13 +42,13 @@ chmod a+rx resize.sh && ./resize.sh 80
 4) 소스를 다운로드합니다.
 
 ```java
-git clone https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock
+git clone https://github.com/kyopark2014/RAG-chatbot-using-bedrock-claude-and-Kendra
 ```
 
 5) cdk 폴더로 이동하여 필요한 라이브러리를 설치합니다.
 
 ```java
-cd korean-chatbot-using-amazon-bedrock/cdk-korean-chatbot/ && npm install
+cd RAG-chatbot-using-bedrock-claude-and-Kendra/cdk-rag-chatbot-with-kendra/ && npm install
 ```
 
 6) CDK 사용을 위해 Boostraping을 수행합니다.
@@ -73,12 +73,12 @@ cdk deploy --all
 
 9) HTMl 파일을 S3에 복사합니다.
 
-아래와 같이 Output의 HtmlUpdateCommend을 붙여넣기 합니다. 아래 경우에 "aws s3 cp ../html/ s3://storage-for-korean-chatbot-us-west-2/html --recursive"입니다.
-![noname](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/assets/52392004/624e7ed5-b5e2-4b6b-b584-27f7189cfa7e)
+아래와 같이 Output의 HtmlUpdateCommend을 붙여넣기 합니다. 아래 경우에 "aws s3 cp ../html/ s3://storage-for-korean-chatbot-ap-northeast-2/html --recursive"입니다.
+![noname](https://github.com/kyopark2014/RAG-chatbot-using-bedrock-claude-and-Kendra/assets/52392004/624e7ed5-b5e2-4b6b-b584-27f7189cfa7e)
 
 이때의 결과는 아래와 같습니다.
 
-![image](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/assets/52392004/6d73b377-8cca-4910-9cbd-4aaf1351be2a)
+![image](https://github.com/kyopark2014/RAG-chatbot-using-bedrock-claude-and-Kendra/assets/52392004/6d73b377-8cca-4910-9cbd-4aaf1351be2a)
 
   
 
