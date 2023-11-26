@@ -137,129 +137,6 @@ def store_document_for_kendra(path, s3_file_name, requestId):
     )
 ```
 
-
-### Kendra에서 문서 조회하기
-
-Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 retrieve API를 사용한 후에 결과가 없으면 query API로 fallback을 수행합니다. 
-
-본 게시글에서는 Kendra의 검색정확도를 높이기 위하여, [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)와 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)를 활용하기 위하여 LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#), [ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)을 이용하지 않고, [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 동일한 동작을 구현하였습니다. 
-
-[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. [Retrieve API는 2023년 11월 현재에 영어(en)만 Confidence score를 제공](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)합니다. 또한, Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)도 지원하지 않습니다.
-
-
-
-  
-파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, retrieve API를 이용하여 관련 문서를 검색할 때에도 동일하게 설정합니다. [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
-
-```python
-resp = kendra_client.retrieve(
-    IndexId = index_id,
-    QueryText = query,
-    PageSize = top_k,
-    AttributeFilter = {
-        "EqualsTo": {
-            "Key": "_language_code",
-            "Value": {
-                "StringValue": "ko"
-            }
-        },
-    },
-)
-query_id = resp["QueryId"]
-
-if len(resp["ResultItems"]) >= 1:
-    retrieve_docs = []
-    for query_result in resp["ResultItems"]:
-        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
-    
-    if confidence == 'VERY_HIGH' or confidence == 'HIGH':
-        retrieve_docs.append(extract_relevant_doc_for_kendra(query_id = query_id, apiType = "retrieve", query_result = query_result))
-
-def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
-    rag_type = "kendra"
-    if(apiType == 'retrieve'): # retrieve API
-        excerpt = query_result["Content"]
-        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
-        document_id = query_result["DocumentId"] 
-        document_title = query_result["DocumentTitle"]
-        
-        document_uri = ""
-        document_attributes = query_result["DocumentAttributes"]
-        for attribute in document_attributes:
-            if attribute["Key"] == "_source_uri":
-                document_uri = str(attribute["Value"]["StringValue"])        
-        if document_uri=="":  
-            document_uri = query_result["DocumentURI"]
-
-        doc_info = {
-            "rag_type": rag_type,
-            "api_type": apiType,
-            "confidence": confidence,
-            "metadata": {
-                "document_id": document_id,
-                "source": document_uri,
-                "title": document_title,
-                "excerpt": excerpt,
-            },
-        }
-
-return doc_info
-```
-
-
-#### Query API
-
-[Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, "DOCUMENT", "QUESTION_ANSWER", "ANSWER" Type의 결과를 얻을 수 있습니다.
-
-- ANSWER: 관련 제안된 답변(Relevant suggested answers)으로 text나 table의 발취(excerpt)로서 강조 표시(highlight)를 지원합니다. 
-- QUESTION_ANSWER: 관련된 FAQ(Matching FAQs) 또는 FAQ 파일에서 얻은 question-answer입니다.
-- DOCUMENT: 관련된 문서(Relevant documents)로서 문서의 발취(excerpt)와 title을 포하한 결고로서 강조 표시(hightlight)를 지원합니다.
-
-관련 파라메터는 아래와 같습니다.
-
-- QueryResultTypeFilter로 type을 지정할 수 있습니다.
-- PageSize: 관련된 문장을 몇개까지 가져올지 지정합니다.
-- PageNumber: 기본값은 결과의 첫페이지입니다. 첫페이지 이후의 결과를 가져올때 지정합니다.
-
-Retrieve API로 결과를 조회한 후에 Query API를 이용하여 FAQ를 조회합니다. 이때, [QueryResultTypeFilter](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Query.html)을 "QUESTION_ANSWER"로 설정하면 FAQ의 결과만을 얻을 수 있습니다. 
-
-```python
-resp = kendra_client.query(
-    IndexId = index_id,
-    QueryText = query,
-    PageSize = top_k / 2,
-    QueryResultTypeFilter = "QUESTION_ANSWER",  
-    AttributeFilter = {
-        "EqualsTo": {
-            "Key": "_language_code",
-            "Value": {
-                "StringValue": "ko"
-            }
-        },
-    },
-)
-print('query resp:', json.dumps(resp))
-query_id = resp["QueryId"]
-
-if len(resp["ResultItems"]) >= 1:
-    for query_result in resp["ResultItems"]:
-        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
-    if confidence == 'VERY_HIGH':
-        relevant_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="query", query_result=query_result))    
-    if len(relevant_docs) >= top_k:
-        break
-```
-
-
-
-#### Score 활용하기 
-
-검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
-
-[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
-
-
-
 ### FAQ 활용하기
 
 Query API와 다르게 qustion/answer와 FAG는 포함되지 않습니다. 
@@ -383,6 +260,127 @@ FAQ에 있는 "How many free clinics are in Spokane WA?"의 Answer는 13이고 �
    }
 }
 ```
+
+### Score 활용하기 
+
+검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
+
+[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
+
+
+### Kendra에서 문서 조회하기
+
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 retrieve API를 사용한 후에 결과가 없으면 query API로 fallback을 수행합니다. 
+
+본 게시글에서는 Kendra의 검색정확도를 높이기 위하여, [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)와 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)를 활용하기 위하여 LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#), [ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)을 이용하지 않고, [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 동일한 동작을 구현하였습니다. 
+
+[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. [Retrieve API는 2023년 11월 현재에 영어(en)만 Confidence score를 제공](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)합니다. 또한, Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)도 지원하지 않습니다.
+
+
+
+  
+파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, retrieve API를 이용하여 관련 문서를 검색할 때에도 동일하게 설정합니다. [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
+
+```python
+resp = kendra_client.retrieve(
+    IndexId = index_id,
+    QueryText = query,
+    PageSize = top_k,
+    AttributeFilter = {
+        "EqualsTo": {
+            "Key": "_language_code",
+            "Value": {
+                "StringValue": "ko"
+            }
+        },
+    },
+)
+query_id = resp["QueryId"]
+
+if len(resp["ResultItems"]) >= 1:
+    retrieve_docs = []
+    for query_result in resp["ResultItems"]:
+        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
+    
+    if confidence == 'VERY_HIGH' or confidence == 'HIGH':
+        retrieve_docs.append(extract_relevant_doc_for_kendra(query_id = query_id, apiType = "retrieve", query_result = query_result))
+
+def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
+    rag_type = "kendra"
+    if(apiType == 'retrieve'): # retrieve API
+        excerpt = query_result["Content"]
+        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
+        document_id = query_result["DocumentId"] 
+        document_title = query_result["DocumentTitle"]
+        
+        document_uri = ""
+        document_attributes = query_result["DocumentAttributes"]
+        for attribute in document_attributes:
+            if attribute["Key"] == "_source_uri":
+                document_uri = str(attribute["Value"]["StringValue"])        
+        if document_uri=="":  
+            document_uri = query_result["DocumentURI"]
+
+        doc_info = {
+            "rag_type": rag_type,
+            "api_type": apiType,
+            "confidence": confidence,
+            "metadata": {
+                "document_id": document_id,
+                "source": document_uri,
+                "title": document_title,
+                "excerpt": excerpt,
+            },
+        }
+
+return doc_info
+```
+
+
+#### Query API
+
+[Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, "DOCUMENT", "QUESTION_ANSWER", "ANSWER" Type의 결과를 얻을 수 있습니다.
+
+- ANSWER: 관련 제안된 답변(Relevant suggested answers)으로 text나 table의 발취(excerpt)로서 강조 표시(highlight)를 지원합니다. 
+- QUESTION_ANSWER: 관련된 FAQ(Matching FAQs) 또는 FAQ 파일에서 얻은 question-answer입니다.
+- DOCUMENT: 관련된 문서(Relevant documents)로서 문서의 발취(excerpt)와 title을 포하한 결고로서 강조 표시(hightlight)를 지원합니다.
+
+관련 파라메터는 아래와 같습니다.
+
+- QueryResultTypeFilter로 type을 지정할 수 있습니다.
+- PageSize: 관련된 문장을 몇개까지 가져올지 지정합니다.
+- PageNumber: 기본값은 결과의 첫페이지입니다. 첫페이지 이후의 결과를 가져올때 지정합니다.
+
+Retrieve API로 결과를 조회한 후에 Query API를 이용하여 FAQ를 조회합니다. 이때, [QueryResultTypeFilter](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Query.html)을 "QUESTION_ANSWER"로 설정하면 FAQ의 결과만을 얻을 수 있습니다. 
+
+```python
+resp = kendra_client.query(
+    IndexId = index_id,
+    QueryText = query,
+    PageSize = top_k / 2,
+    QueryResultTypeFilter = "QUESTION_ANSWER",  
+    AttributeFilter = {
+        "EqualsTo": {
+            "Key": "_language_code",
+            "Value": {
+                "StringValue": "ko"
+            }
+        },
+    },
+)
+print('query resp:', json.dumps(resp))
+query_id = resp["QueryId"]
+
+if len(resp["ResultItems"]) >= 1:
+    for query_result in resp["ResultItems"]:
+        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
+    if confidence == 'VERY_HIGH':
+        relevant_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="query", query_result=query_result))    
+    if len(relevant_docs) >= top_k:
+        break
+```
+
+
 
 
 
