@@ -4,17 +4,6 @@
 
 <img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
 
-문서파일을 업로드하여 Kendra에 저장하는 과정은 아래와 같습니다.
-
-1) 사용자가 파일 업로드를 요청합니다. 이때 사용하는 Upload API는 [lambda (upload)](.lambda-upload/index.js)는 S3 presigned url을 생성하여 전달합니다.
-2) 이후 presigned url로 문서를 업로드 하면 S3에 Object로 저장됩니다.
-3) Chat API에서 request type을 'document'로 지정하면 [lambda (chat)](./lambda-chat/index.js)은 S3에서 object를 로드하여 텍스트를 추출합니다.
-4) 추출한 텍스트를 Kendra로 전달합니다.
-5) 문서 내용을 사용자가 알수 있도록, 요약(summarization)을 수행하고, 결과를 사용자에게 전달합니다.
-
-아래는 문서 업로드시의 sequence diagram입니다. 
-
-![seq-upload](./sequence/seq-upload.png)
 
 채팅 창에서 텍스트 입력(Prompt)를 통해 Kendra로 RAG를 활용하는 과정은 아래와 같습니다.
 1) 사용자가 채팅창에서 질문(Question)을 입력합니다.
@@ -25,8 +14,7 @@
 
 아래는 kendra를 이용한 메시지 동작을 설명하는 sequence diagram입니다. 
 
-![seq-chat](./sequence/seq-chat.png)
-
+<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5ec32908-823b-47ea-baef-fbfba2ef240b" width="800">
 
 ## 주요 구성
 
