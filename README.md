@@ -139,9 +139,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ### FAQ 활용하기
 
-Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)을 이용하면 RAG의 정확도를 개선할 수 있습니다. [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 
-
-[FAQ 예제](./contents/faq/demo.csv)는 아래와 같이 "How many free clinics are in Spokane WA?"를 질문으로 등록하고 답변으로 13을 등록할 수 있습니다. 또한 관련 자료에 대한 uri를 등록할 수 있습니다.
+Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)을 이용하면 RAG의 정확도를 개선할 수 있습니다. [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 아래의 [FAQ 예제](./contents/faq/demo.csv)와 같이 "How many free clinics are in Spokane WA?"의 답변은 13이고, 참고 자료에 대한 uri를 등록할 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
 
