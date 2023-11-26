@@ -14,7 +14,7 @@
 
 아래는 kendra를 이용한 메시지 동작을 설명하는 sequence diagram입니다. 
 
-<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5ec32908-823b-47ea-baef-fbfba2ef240b" width="900">
+<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5ec32908-823b-47ea-baef-fbfba2ef240b" width="1000">
 
 ## 주요 구성
 
