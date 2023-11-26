@@ -30,9 +30,9 @@
 
 ## 주요 구성
 
-### Kendra 사용을 위한 준비
+### Kendra 준비
 
-[Kendra 사용을 위한 준비](./kendra-preperation.md)
+AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
 
 ### Bedrock을 LangChain으로 연결하기
 
