@@ -22,7 +22,7 @@
 
 AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
 
-### Bedrock을 LangChain으로 연결하기
+### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
 아래와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2을 LLM으로 설정합니다.
 
@@ -139,24 +139,15 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ### FAQ 활용하기
 
-Query API와 다르게 qustion/answer와 FAG는 포함되지 않습니다. 
+Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)을 이용하면 RAG의 정확도를 개선할 수 있습니다. [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 
 
-Kendra의 [FAQ((Frequently Asked Questions))를 이용](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/blob/main/kendra-faq.md)하면 RAG의 정확도를 개선할 수 있는데, Query API로만 결과를 얻을 수 있습니다. 또한, Kendra에서는 Retrieve API로 조회시 결과가 없을때에 Query API로 fallback을 best practice로 가이드하고 있습니다. 따라서, FAQ를 사용하고자 한다면, Retrive와 Query API를 모두 사용하여야 합니다.
-
-[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)를 참조합니다. [kendra-faq-refresher](https://github.com/aws-samples/amazon-kendra-faq-refresher/tree/main)를 참조하여 FAQ를 Kendra 검색 결과로 활용할 수 있습니다.
-
-여기서는 [Kendra FAQ](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/blob/main/kendra-faq.md)와 같이 Kendra의 Query API로 FAQ의 결과를 얻으면, 질문과 결과를 함께 excerpt로 활용합니다.
-
-
-FAQ에 있는 "How many free clinics are in Spokane WA?"의 Answer는 13이고 아래와 같은 reference를 가지고 있습니다.
+[FAQ 예제](./contents/faq/demo.csv)는 아래와 같이 "How many free clinics are in Spokane WA?"를 질문으로 등록하고 답변으로 13을 등록할 수 있습니다. 또한 관련 자료에 대한 uri를 등록할 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/assets/52392004/996174e6-765b-4d2c-a5ea-7cfeb838a609)
 
-아래는 "How many clinics are in Spokane WA?"으로 Kenra에 Query 했을때의 결과입니다. 여기서 FAQ의 "free"가 있고 없음에 따라 결과는 매우 다름에도 불구하고 아래와 같이, Kendra의 응답은 "ScoreConfidence"를 "VERY_HIGH"로 응답하고 있습니다.
+Kendra의 FAQ는 Query API를 이용하면 아래와 같이 질문('QuestionText'), 답변('AnswerText'), URI('_source_uri')에 대한 정보뿐 아니라, 'ScoreConfidence'로 'VERY_HIGH'을 얻을 수 있습니다. 
 
-따라서, 응답의 Type이 "QUESTION_ANSWER"인 경우에는 발췌를 할때에 "AdditionalAttributes"의 "QuestionText"을 같이 사용하여야 합니다. 즉 "How many free clinics are in Spokane WA? 13"으로 사용합니다.
-
-```python
+```java
 {
    "QueryId":"6ca1e9c4-9ce1-41f7-a527-2b6a536ad8b4",
    "ResultItems":[
@@ -171,32 +162,6 @@ FAQ에 있는 "How many free clinics are in Spokane WA?"의 Answer는 13이고 �
                "Value":{
                   "TextWithHighlightsValue":{
                      "Text":"How many free clinics are in Spokane WA?",
-                     "Highlights":[
-                        {
-                           "BeginOffset":4,
-                           "EndOffset":8,
-                           "TopAnswer":false,
-                           "Type":"STANDARD"
-                        },
-                        {
-                           "BeginOffset":14,
-                           "EndOffset":21,
-                           "TopAnswer":false,
-                           "Type":"STANDARD"
-                        },
-                        {
-                           "BeginOffset":29,
-                           "EndOffset":36,
-                           "TopAnswer":false,
-                           "Type":"STANDARD"
-                        },
-                        {
-                           "BeginOffset":37,
-                           "EndOffset":39,
-                           "TopAnswer":false,
-                           "Type":"STANDARD"
-                        }
-                     ]
                   }
                }
             },
@@ -206,28 +171,11 @@ FAQ에 있는 "How many free clinics are in Spokane WA?"의 Answer는 13이고 �
                "Value":{
                   "TextWithHighlightsValue":{
                      "Text":"13",
-                     "Highlights":[
-                        
-                     ]
                   }
                }
             }
          ],
          "DocumentId":"c24c0fe9cbdfa412ac58d1b5fc07dfd4afd21cbd0f71df499f305296d985a8c9a91f1b2c-e28b-4d13-8b01-8a33be5fc126",
-         "DocumentTitle":{
-            "Text":""
-         },
-         "DocumentExcerpt":{
-            "Text":"13",
-            "Highlights":[
-               {
-                  "BeginOffset":0,
-                  "EndOffset":2,
-                  "TopAnswer":false,
-                  "Type":"STANDARD"
-               }
-            ]
-         },
          "DocumentURI":"https://www.freeclinics.com/",
          "DocumentAttributes":[
             {
@@ -240,26 +188,16 @@ FAQ에 있는 "How many free clinics are in Spokane WA?"의 Answer는 13이고 �
          "ScoreAttributes":{
             "ScoreConfidence":"VERY_HIGH"
          },
-         "FeedbackToken":"AYADeLqxw-UVD3GzCPho81xtW6IAXwABABVhd3MtY3J5cHRvLXB1YmxpYy1rZXkAREFrdE4vUzFJTWFmVGVjaFhUbHhlLzh4VXFvYXNablozR2RmeHVFb0JHN05ZYVVoNmZnMVRUMGdjQS9CTzdWWlNNQT09AAEAB2F3cy1rbXMAS2Fybjphd3M6a21zOnVzLXdlc3QtMjoxNDk0MDA5NDM5NTk6a2V5LzUyN2YwMjRhLTUyMDktNDI4NC1iOTYwLTJhMjYxMzQxNWNkNgC4AQIBAHhoFIrDBc0sA_W0qqJvieboGJWYBK_hEm739PftPtfwZwGkHCq8G_rQwpPcBduAGoQFAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxTLvEAoHAoxFuktZAgEQgDsadJ5kv-qG2Clv0RRB7DSV8yK1Hv92wtCDYRDp0qswISUtpo6BlAvfaqAG3VD__jmy_wyv_iPuJpQn3wIAAAAADAAAEAAAAAAAAAAAAAAAAAAkeJmB-aXVfLQSLWk6xKfQ_____wAAAAEAAAAAAAAAAAAAAAEAAAF2YTptEGgTPKdRbRK31PKlnqy7fC4-exZfkWr1KhaYjExSOuoIxntlROmX8DaVLp7Iy-TaUrKg9-C0Iwj62FlMEDKbBxVdq7jI31uIZDP58Z17HUvl4acvRktyW_gaPMIDiVxo0QaAKvmP7qwq34-3Ti_ODBP3dTaufr7atTjsyBBJTQgJ4P3SSfMPniqdZOQTUnIb5PcbALwGVTT3FLxu9LxlpscfyoKvzGZSLAPDgmRWINEmPz9j9h-IzUATlJtqpydOnX3wAmUKx4GyBzISuhU7IxXK0BnYBAcwkl_ii04W5vEUi02cyLOBTU8iwYo-C0xUY7X2IccrzGHxF4o3YPW6mnmC_6YXm2nXPUi0OOPoX1sk5kuhx8Ra3n11DuKq6SAGH414hSxqFrPSfqBCIF5356z4tG_nJQ6KxKAi2LUwypAAme48DbZH_5KTsfFcm7X3MSr23XwNhq8jDbudlz-M3JF_6E314B7V99VASAxNxk-yiOUyjcMoECtcQ-cpgAbOf2MEAGcwZQIxAMtWD1KR4dhKMBJyJMOwoFsRgdVONBxgaz3z2TKJZfSUl3l-CFyENlB9oWq1f_dlOgIwXVTlmVXN5gyOZvvlqfvJybhNO2tyZ53ilC5_GsKl9Lu9cRnGjMX-tKqPyheSCVc3.6ca1e9c4-9ce1-41f7-a527-2b6a536ad8b4-e1b952fa-7d3b-4290-ac5e-9f12b99db3af"
+         "FeedbackToken":"AYADeLqxw- 중략 - sKl9Lud8b4-e1b952fa-7d3b-4290-ac5e-9f12b99db3af"
       }
    ],
-   "FacetResults":[
-      
-   ],
    "TotalNumberOfResults":1,
-   "ResponseMetadata":{
-      "RequestId":"f415076d-1384-47d4-8718-8245ca3c6d89",
-      "HTTPStatusCode":200,
-      "HTTPHeaders":{
-         "x-amzn-requestid":"f415076d-1384-47d4-8718-8245ca3c6d89",
-         "content-type":"application/x-amz-json-1.1",
-         "content-length":"2642",
-         "date":"Sat, 18 Nov 2023 03:24:27 GMT"
-      },
-      "RetryAttempts":0
-   }
 }
 ```
+
+[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)는 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다. Kendra는 FAQ중에 가장 가까운 답을 주는데 "How many clinics are in Spokane WA?"로 "free"를 빼고 입력하면 전혀 다른 결과가 예상되지만, Kendra는 "ScoreConfidence"를 "VERY_HIGH"로 "13" 응답할 수 있습니다. 따라서, 응답의 Type이 "QUESTION_ANSWER"인 경우에는 발췌를 할때에 "AdditionalAttributes"의 "QuestionText"을 같이 사용하여야 합니다. 즉, "How many free clinics are in Spokane WA? 13"으로 사용합니다.
+
+
 
 ### Score 활용하기 
 
