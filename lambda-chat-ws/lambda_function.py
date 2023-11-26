@@ -583,7 +583,7 @@ def retrieve_from_Kendra(query, top_k):
         resp =  kendra_client.retrieve(
             IndexId = index_id,
             QueryText = query,
-            PageSize = 10,      
+            PageSize = top_k,      
             AttributeFilter = {
                 "EqualsTo": {      
                     "Key": "_language_code",
@@ -603,7 +603,8 @@ def retrieve_from_Kendra(query, top_k):
                 confidence = query_result["ScoreAttributes"]['ScoreConfidence']
 
                 #if confidence == 'VERY_HIGH' or confidence == 'HIGH' or confidence == 'MEDIUM': 
-                retrieve_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="retrieve", query_result=query_result))
+                if confidence == 'VERY_HIGH' or confidence == 'HIGH': 
+                    retrieve_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="retrieve", query_result=query_result))
             # print('relevant_docs: ', relevant_docs)
 
             print('Looking for FAQ...')
@@ -611,7 +612,7 @@ def retrieve_from_Kendra(query, top_k):
                 resp =  kendra_client.query(
                     IndexId = index_id,
                     QueryText = query,
-                    PageSize = top_k/2,
+                    PageSize = 4,
                     QueryResultTypeFilter = "QUESTION_ANSWER",  # 'QUESTION_ANSWER', 'ANSWER', "DOCUMENT"
                     AttributeFilter = {
                         "EqualsTo": {      
@@ -658,7 +659,7 @@ def retrieve_from_Kendra(query, top_k):
                 resp =  kendra_client.query(
                     IndexId = index_id,
                     QueryText = query,
-                    PageSize = 10,
+                    PageSize = top_k,
                     #QueryResultTypeFilter = "DOCUMENT",  # 'QUESTION_ANSWER', 'ANSWER', "DOCUMENT"
                     AttributeFilter = {
                         "EqualsTo": {      
