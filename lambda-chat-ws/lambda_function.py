@@ -38,7 +38,7 @@ modelId = os.environ.get('model_id', 'anthropic.claude-v2')
 print('model_id: ', modelId)
 isDebugging = False
 rag_type = os.environ.get('rag_type', 'kendra')
-rag_method = os.environ.get('rag_method', 'RetrievalQA') # RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
+rag_method = os.environ.get('rag_method', 'RetrievalPrompt') # RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
 
 enableReference = os.environ.get('enableReference', 'false')
 debugMessageMode = os.environ.get('debugMessageMode', 'false')
@@ -200,17 +200,17 @@ def store_document_for_kendra(path, s3_file_name, requestId):
     encoded_name = parse.quote(s3_file_name)
     source_uri = path + encoded_name    
     #print('source_uri: ', source_uri)
-    file_type = (s3_file_name[s3_file_name.rfind('.')+1:len(s3_file_name)]).upper()
-    #print('file_type: ', file_type)
+    ext = (s3_file_name[s3_file_name.rfind('.')+1:len(s3_file_name)]).upper()
+    #print('ext: ', ext)
 
     # PLAIN_TEXT, XSLT, MS_WORD, RTF, CSV, JSON, HTML, PDF, PPT, MD, XML, MS_EXCEL
-    if(file_type == 'PPTX'):
+    if(ext == 'PPTX'):
         file_type = 'PPT'
-    elif(file_type == 'TXT'):
+    elif(ext == 'TXT'):
         file_type = 'PLAIN_TEXT'         
-    elif(file_type == 'XLS' or file_type == 'XLSX'):
+    elif(ext == 'XLS' or ext == 'XLSX'):
         file_type = 'MS_EXCEL'      
-    elif(file_type == 'DOC' or file_type == 'DOCX'):
+    elif(ext == 'DOC' or ext == 'DOCX'):
         file_type = 'MS_WORD'
 
     kendra_client = boto3.client(
@@ -611,7 +611,7 @@ def retrieve_from_Kendra(query, top_k):
                 resp =  kendra_client.query(
                     IndexId = index_id,
                     QueryText = query,
-                    PageSize = 10,
+                    PageSize = top_k/2,
                     QueryResultTypeFilter = "QUESTION_ANSWER",  # 'QUESTION_ANSWER', 'ANSWER', "DOCUMENT"
                     AttributeFilter = {
                         "EqualsTo": {      
