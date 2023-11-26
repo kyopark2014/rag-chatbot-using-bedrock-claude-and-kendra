@@ -74,7 +74,7 @@ userId  = jsonBody['user_id']
 if userId in map_chain:
     memory_chain = map_chain[userId]
 else:
-    memory_chain = ConversationBufferWindowMemory(memory_key = "chat_history", output_key = 'answer', return_messages = True, k = 5)
+    memory_chain = ConversationBufferWindowMemory(memory_key="chat_history",output_key='answer',return_messages=True,k=5)
     map_chain[userId] = memory_chain
 ```
 
