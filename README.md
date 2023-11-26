@@ -202,6 +202,8 @@ def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
                 "excerpt": excerpt,
             },
         }
+
+return doc_info
 ```
 
 
