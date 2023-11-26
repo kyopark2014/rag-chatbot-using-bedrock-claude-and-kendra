@@ -137,6 +137,13 @@ def store_document_for_kendra(path, s3_file_name, requestId):
     )
 ```
 
+### Score 활용하기 
+
+검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
+
+[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
+
+
 ### FAQ 활용하기
 
 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, RAG의 정확도를 개선할 수 있습니다. [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 아래의 [FAQ 예제](./contents/faq/demo.csv)를 등록후에 "How many free clinics are in Spokane WA?"를 질문하면 답변은 13이고, 참고 자료에 대한 uri를 확인할 수 있습니다.
@@ -197,11 +204,6 @@ Kendra는 FAQ들 중에 가장 가까운 답을 주는데, "How many clinics are
 
 
 
-### Score 활용하기 
-
-검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
-
-[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
 
 
 ### Kendra에서 문서 조회하기
