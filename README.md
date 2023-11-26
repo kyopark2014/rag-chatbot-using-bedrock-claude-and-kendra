@@ -61,7 +61,7 @@ const kendraPolicy = new iam.PolicyStatement({
     actions: ['kendra:*'],
 });
 
-roleLambda.attachInlinePolicy( // add kendra policy
+roleLambdaWebsocketWebsocket.attachInlinePolicy( // add kendra policy
     new iam.Policy(this, `kendra-policy-for-${projectName}`, {
         statements: [kendraPolicy],
     }),
@@ -88,7 +88,7 @@ Kendra를 위한 trust policy는 아래와 같이 설정합니다.
 따라서, [cdk-chatbot-with-kendra-stack.ts](./cdk-chatbot-with-kendra/lib/cdk-chatbot-with-kendra-stack.ts)와 같이 "kendra.amazonaws.com"을 추가합니다.
 
 ```java
-const roleLambda = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
+const roleLambdaWebsocketWebsocket = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
     roleName: `role-lambda-chat-for-${projectName}`,
     assumedBy: new iam.CompositePrincipal(
         new iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -115,12 +115,12 @@ const roleLambda = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
 이를 [cdk-chatbot-with-kendra-stack.ts](./cdk-chatbot-with-kendra/lib/cdk-chatbot-with-kendra-stack.ts)에서는 아래와 같이 구현할 수 있습니다.
 
 ```java
-const passRoleResourceArn = roleLambda.roleArn;
+const passRoleResourceArn = roleLambdaWebsocketWebsocket.roleArn;
 const passRolePolicy = new iam.PolicyStatement({
     resources: [passRoleResourceArn],
     actions: ['iam:PassRole'],
 });
-roleLambda.attachInlinePolicy(
+roleLambdaWebsocketWebsocket.attachInlinePolicy(
     new iam.Policy(this, `pass-role-of-kendra-for-${projectName}`, {
         statements: [passRolePolicy],
     }),
