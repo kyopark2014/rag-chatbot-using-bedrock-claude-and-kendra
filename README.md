@@ -295,7 +295,7 @@ Retrieve API로 결과를 조회한 후에 Query API를 이용하여 FAQ를 조�
 resp = kendra_client.query(
     IndexId = index_id,
     QueryText = query,
-    PageSize = top_k / 2,
+    PageSize = 4,
     QueryResultTypeFilter = "QUESTION_ANSWER",  
     AttributeFilter = {
         "EqualsTo": {
