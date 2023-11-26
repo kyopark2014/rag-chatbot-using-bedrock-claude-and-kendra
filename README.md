@@ -75,7 +75,81 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### 문서 등록
 
-Kendra의 검색 성능을 향상시키기 위한 방법에 대해 설명합니다. [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)와 같이 주요한 document field는 아래와 같습니다.
+파일업로드후 링크를 제공할 수 있도록 파일이 저장된 S3의 파일명과 CloudFront의 도메인 주소를 이용하여 source_uri를 생성합니다. 또한, S3 Object이름에서 파일확장자를 추출해서 적절한 파일타입으로 변환합니다. 여기서는 파일의 "_language_code"를 "ko"로 설정하였고 [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 업로드를 수행합니다. 이때 S3를 이용해 업로드 할 수 있는 Document의 크기는 50MB이며, [문서포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)와 같이 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원합니다.
+
+
+```java
+def store_document_for_kendra(path, s3_file_name, requestId):
+    encoded_name = parse.quote(s3_file_name)
+    source_uri = path + encoded_name    
+    file_type = (s3_file_name[s3_file_name.rfind('.')+1:len(s3_file_name)]).upper()
+
+    if(file_type == 'PPTX'):
+        file_type = 'PPT'
+    elif(file_type == 'TXT'):
+        file_type = 'PLAIN_TEXT'         
+    elif(file_type == 'XLS' or file_type == 'XLSX'):
+        file_type = 'MS_EXCEL'      
+    elif(file_type == 'DOC' or file_type == 'DOCX'):
+        file_type = 'MS_WORD'
+
+    kendra_client = boto3.client(
+        service_name='kendra', 
+        region_name=kendra_region,
+        config = Config(
+            retries=dict(
+                max_attempts=10
+            )
+        )
+    )
+
+    documents = [
+        {
+            "Id": requestId,
+            "Title": s3_file_name,
+            "S3Path": {
+                "Bucket": s3_bucket,
+                "Key": s3_prefix+'/'+s3_file_name
+            },
+            "Attributes": [
+                {
+                    "Key": '_source_uri',
+                    'Value': {
+                        'StringValue': source_uri
+                    }
+                },
+                {
+                    "Key": '_language_code',
+                    'Value': {
+                        'StringValue': "ko"
+                    }
+                },
+            ],
+            "ContentType": file_type
+        }
+    ]
+
+    result = kendra_client.batch_put_document(
+        IndexId = kendraIndex,
+        RoleArn = roleArn,
+        Documents = documents       
+    )
+```
+
+
+### Kendra에서 문서 조회하기
+
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve API](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다.
+
+#### Retrieve API
+
+Retrieve API는 Query API보다 많은 token으로 구성된 발췌문을 제공하는데, 발췌문의 길이는 RAG의 정확도에 매우 중요한 요소입니다. 또한 Retrieve API에 대한 token 숫자는 기본이 300인데, case를 통해 증량을 요청할 수 있습니다. 
+
+[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. Query API와 다르게 qustion/answer와 FAG는 포함되지 않습니다. 
+
+Retrieve API는 영어(en)만 score를 제공하고, 성능을 개선하기 위한 feedback을 지원하지 않습니다.
+
+[Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)와 같이 주요한 document field는 아래와 같습니다.
 
 - _authors: 저자 리스트
 - _category: Document group의 category
@@ -90,123 +164,6 @@ Kendra의 검색 성능을 향상시키기 위한 방법에 대해 설명합니�
 - _language_code: 언어코드, 영어(en), 한국어(ko)
 
 [BatchPutDocument](https://docs.aws.amazon.com/kendra/latest/APIReference/API_BatchPutDocument.html) API에서 Attribute 추가하기
-
-[batch_put_document](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra/client/batch_put_document.html)에 따라 아래처럼 attribute를 지정할 수 있습니다.
-
-```java
-response = client.batch_put_document(
-    IndexId='string',
-    RoleArn='string',
-    Documents=[
-        {
-            'Id': 'string',
-            'Title': 'string',
-            'Blob': b'bytes',
-            'S3Path': {
-                'Bucket': 'string',
-                'Key': 'string'
-            },
-            'Attributes': [
-                {
-                    'Key': 'string',
-                    'Value': {
-                        'StringValue': 'string',
-                        'StringListValue': [
-                            'string',
-                        ],
-                        'LongValue': 123,
-                        'DateValue': datetime(2015, 1, 1)
-                    }
-                },
-            ],
-            'AccessControlList': [
-                {
-                    'Name': 'string',
-                    'Type': 'USER'|'GROUP',
-                    'Access': 'ALLOW'|'DENY',
-                    'DataSourceId': 'string'
-                },
-            ],
-            'HierarchicalAccessControlList': [
-                {
-                    'PrincipalList': [
-                        {
-                            'Name': 'string',
-                            'Type': 'USER'|'GROUP',
-                            'Access': 'ALLOW'|'DENY',
-                            'DataSourceId': 'string'
-                        },
-                    ]
-                },
-            ],
-            'ContentType': 'PDF'|'HTML'|'MS_WORD'|'PLAIN_TEXT'|'PPT'|'RTF'|'XML'|'XSLT'|'MS_EXCEL'|'CSV'|'JSON'|'MD',
-            'AccessControlConfigurationId': 'string'
-        },
-    ]
-)
-```
-
-여기서 ContentType으로 아래와 같은 파일 확장자를 제공하므로 TXT는 PLAIN_TEXT로, PPTX는 "PPT"로 등록하여야 합니다. 
-
-```text
-PLAIN_TEXT, XSLT, MS_WORD, RTF, CSV, JSON, HTML, PDF, PPT, MD, XML, MS_EXCEL
-```
-
-S3에 저장된 문서를 kendra로 전달하기 위하여, 아래와 같이 문서에 대한 S3 정보를 kendra의 [batch_put_document()](https://docs.aws.amazon.com/kendra/latest/APIReference/API_BatchPutDocument.html)을 이용하여 전달합니다. 
-
-```python
-documents = [
-    {
-        "Id": requestId,
-        "Title": s3_file_name,
-        "S3Path": {
-            "Bucket": s3_bucket,
-            "Key": s3_prefix+'/'+s3_file_name
-        },
-        "Attributes": [
-            {
-                "Key": '_language_code',
-                'Value': {
-                    'StringValue': "ko"
-                }
-            },
-        ],
-        "ContentType": file_type
-    }
-]
-
-kendra_client = boto3.client(
-    service_name='kendra', 
-    region_name=kendra_region,
-    config = Config(
-        retries=dict(
-            max_attempts=10
-        )
-    )
-)
-
-kendra.batch_put_document(
-    Documents = documents,
-    IndexId = kendraIndex,
-    RoleArn = roleArn
-)
-```
-
-이때 S3를 이용해 업로드 할 수 있는 Document의 크기는 50MB이며, [문서포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)와 같이 HTML, XML, TXT, CSV 뿐 아니라, Excel, Word, PowerPoint를 지원합니다.
-
-
-
-### Kendra에서 문서 조회하기
-
-Kendra에서 검색할때에 사용하는 API에는 [Retrieve API](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다.
-
-#### Retrieve API
-
-Retrieve API는 Query API보다 많은 token으로 구성된 발췌문을 제공하는데, 발췌문의 길이는 RAG의 정확도에 매우 중요한 요소입니다. 또한 Retrieve API에 대한 token 숫자는 기본이 300인데, case를 통해 증량을 요청할 수 있습니다. 
-
-[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. Query API와 다르게 qustion/answer와 FAG는 포함되지 않습니다. 
-
-Retrieve API는 영어(en)만 score를 제공하고, 성능을 개선하기 위한 feedback을 지원하지 않습니다.
 
 
 #### Query API
@@ -284,6 +241,9 @@ def get_retrieve_using_Kendra(index_id, query, top_k):
     
         print("------------------\n\n")      
 ```
+
+
+
 
 
 #### Score 활용하기 
