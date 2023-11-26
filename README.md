@@ -36,11 +36,11 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock을 LangChain으로 연결하기
 
-아래와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, 사용 LLM은 Antrhopic의 Claude V2를 설정합니다.
+아래와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, 사용 LLM은 Antrhopic의 Claude V2를 설정합니다.
 
 ```python
 modelId = 'anthropic.claude-v2’
-bedrock_region = "us-east-1" 
+bedrock_region = "us-east-1" 
 
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
