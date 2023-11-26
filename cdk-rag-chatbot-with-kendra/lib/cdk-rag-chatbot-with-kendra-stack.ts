@@ -180,7 +180,6 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         statements: [kendraPolicy],
       }),
     );
-    kendraIndex = cfnIndex.attrId;
 
     roleLambdaWebsocket.attachInlinePolicy(
       new iam.Policy(this, `lambda-inline-policy-for-kendra-in-${projectName}`, {
@@ -215,6 +214,8 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
     role.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
     });
+
+    kendraIndex = cfnIndex.attrId;
 
     // API Gateway
     const api = new apiGateway.RestApi(this, `api-chatbot-for-${projectName}`, {
