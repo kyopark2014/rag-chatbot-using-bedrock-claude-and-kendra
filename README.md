@@ -127,32 +127,7 @@ kendra.batch_put_document(
 )
 ```
 
-이때 전송할 수 있는 Document의 크기는 아래와 같습니다.
-- 5 MB total size for inline documents
-- 50 MB total size for files from an S3 bucket
-- 5 MB extracted text for any file
-
-
-업로드한 문서 파일에 대한 정보를 사용자에게 보여주기 위하여 아래와 같이 [load_summarize_chain](https://python.langchain.com/docs/use_cases/summarization)을 이용하여 요약(Summarization)을 수행합니다.
-
-```python
-file_type = object[object.rfind('.') + 1: len(object)]
-print('file_type: ', file_type)
-
-docs = load_document(file_type, object)
-prompt_template = """Write a concise summary of the following:
-
-{ text }
-                
-CONCISE SUMMARY """
-
-PROMPT = PromptTemplate(template = prompt_template, input_variables = ["text"])
-chain = load_summarize_chain(llm, chain_type = "stuff", prompt = PROMPT)
-summary = chain.run(docs)
-print('summary: ', summary)
-
-msg = summary
-```
+이때 S3를 이용해 업로드 할 수 있는 Document의 크기는 50MB이며, [문서포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)와 같이 HTML, XML, TXT, CSV 뿐 아니라, Excel, Word, PowerPoint를 지원합니다.
 
 
 ### Question/Answering
