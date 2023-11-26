@@ -82,15 +82,15 @@ memory_chain.chat_memory.add_ai_message(msg)
 def store_document_for_kendra(path, s3_file_name, requestId):
     encoded_name = parse.quote(s3_file_name)
     source_uri = path + encoded_name    
-    file_type = (s3_file_name[s3_file_name.rfind('.')+1:len(s3_file_name)]).upper()
 
-    if(file_type == 'PPTX'):
+    ext = (s3_file_name[s3_file_name.rfind('.')+1:len(s3_file_name)]).upper()
+    if(ext == 'PPTX'):
         file_type = 'PPT'
-    elif(file_type == 'TXT'):
+    elif(ext == 'TXT'):
         file_type = 'PLAIN_TEXT'         
-    elif(file_type == 'XLS' or file_type == 'XLSX'):
+    elif(ext == 'XLS' or ext == 'XLSX'):
         file_type = 'MS_EXCEL'      
-    elif(file_type == 'DOC' or file_type == 'DOCX'):
+    elif(ext == 'DOC' or ext == 'DOCX'):
         file_type = 'MS_WORD'
 
     kendra_client = boto3.client(
