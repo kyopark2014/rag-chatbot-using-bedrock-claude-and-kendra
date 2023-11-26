@@ -143,7 +143,8 @@ Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/
 
 [FAQ 예제](./contents/faq/demo.csv)는 아래와 같이 "How many free clinics are in Spokane WA?"를 질문으로 등록하고 답변으로 13을 등록할 수 있습니다. 또한 관련 자료에 대한 uri를 등록할 수 있습니다.
 
-![noname](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/assets/52392004/996174e6-765b-4d2c-a5ea-7cfeb838a609)
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
+
 
 Kendra의 FAQ는 Query API를 이용하면 아래와 같이 질문('QuestionText'), 답변('AnswerText'), URI('_source_uri')에 대한 정보뿐 아니라, 'ScoreConfidence'로 'VERY_HIGH'을 얻을 수 있습니다. 
 
