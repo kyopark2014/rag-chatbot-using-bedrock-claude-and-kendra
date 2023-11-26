@@ -81,7 +81,7 @@ else:
 LLM을 통해 결과를 얻으면 아래와 같이 질문과 응답을 memory_chain에 새로운 dialog로 저장할 수 있습니다.
 
 ```python
-memory_chain.chat_memory.add_user_message(text)  # append new diaglog
+memory_chain.chat_memory.add_user_message(text)
 memory_chain.chat_memory.add_ai_message(msg)
 ```
 
