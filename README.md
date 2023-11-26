@@ -129,7 +129,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
         }
     ]
 
-    result = kendra_client.batch_put_document(
+    kendra_client.batch_put_document(
         IndexId = kendraIndex,
         RoleArn = roleArn,
         Documents = documents       
