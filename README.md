@@ -131,16 +131,125 @@ kendra.batch_put_document(
 
 
 
-### Kendra에서 관련 문서 조회하기
+### Kendra에서 문서 조회하기
 
-#### Kendra API: Retrieve
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve API](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다.
+
+#### Retrieve API
+
+Retrieve API는 Query API보다 많은 token으로 구성된 발췌문을 제공하는데, 발췌문의 길이는 RAG의 정확도에 매우 중요한 요소입니다. 또한 Retrieve API에 대한 token 숫자는 기본이 300인데, case를 통해 증량을 요청할 수 있습니다. 
+
+[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. Query API와 다르게 qustion/answer와 FAG는 포함되지 않습니다. 
+
+Retrieve API는 영어(en)만 score를 제공하고, 성능을 개선하기 위한 feedback을 지원하지 않습니다.
+
+
+#### Query API
+
+[Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)의 결과는 "DOCUMENT", "QUESTION_ANSWER", "ANSWER"의 Type이 있습니다. 
+
+- ANSWER: 관련 제안된 답변(Relevant suggested answers)으로 text나 table의 발취(excerpt)로서 강조 표시(highlight)를 지원합니다. 
+- QUESTION_ANSWER: 관련된 FAQ(Matching FAQs) 또는 FAQ 파일에서 얻은 question-answer입니다.
+- DOCUMENT: 관련된 문서(Relevant documents)로서 문서의 발취(excerpt)와 title을 포하한 결고로서 강조 표시(hightlight)를 지원합니다.
+
+관련 파라메터는 아래와 같습니다.
+
+- QueryResultTypeFilter로 type을 지정할 수 있습니다.
+- PageSize: 관련된 문장을 몇개까지 가져올지 지정합니다.
+- PageNumber: 기본값은 결과의 첫페이지입니다. 첫페이지 이후의 결과를 가져올때 지정합니다.
+
+결과를 가져오기
+
+```python
+def get_retrieve_using_Kendra(index_id, query, top_k):
+    kendra_client = boto3.client(
+        service_name='kendra', 
+        region_name=kendra_region,
+        config = Config(
+            retries=dict(
+                max_attempts=10
+            )
+        )
+    )
+
+    attributeFilter = {
+        "AndAllFilters": [
+            {
+                "EqualsTo": {
+                    "Key": '_language_code',
+                    "Value": {
+                        "StringValue": 'en',
+                    },
+                },
+            },
+        ],
+    }
+
+    try:
+        resp =  kendra_client.query(
+            IndexId = index_id,
+            QueryText = query,
+            PageSize = top_k,
+            #PageNumber = page_number,
+            #AttributeFilter = attributeFilter,
+            #QueryResultTypeFilter = "DOCUMENT",  # 'QUESTION_ANSWER'
+        )
+    except Exception as ex:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)
+        
+        raise Exception ("Not able to retrieve to Kendra")        
+    print('resp, ', resp)
+    print('resp[ResultItems], ', resp['ResultItems'])
+    
+    for query_result in resp["ResultItems"]:
+        print("-------------------")
+        print("Type: " + str(query_result["Type"]))
+            
+        if query_result["Type"]=="ANSWER" or query_result["Type"]=="QUESTION_ANSWER":
+            answer_text = query_result["DocumentExcerpt"]["Text"]
+            print(answer_text)
+    
+        if query_result["Type"]=="DOCUMENT":
+            if "DocumentTitle" in query_result:
+                document_title = query_result["DocumentTitle"]["Text"]
+                print("Title: " + document_title)
+            document_text = query_result["DocumentExcerpt"]["Text"]
+            print(document_text)
+    
+        print("------------------\n\n")      
+```
+
+
+#### Score 활용하기 
+
+검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
+
+[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
 
 
 
-#### Kendra API: Query
+#### FAQ 활용하기
 
-#### Prompt를 이용해 질문하기 
+Kendra의 [FAQ를 이용](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/blob/main/kendra-faq.md)하면 RAG의 정확도를 개선할 수 있는데, Query API로만 결과를 얻을 수 있습니다. 또한, Kendra에서는 Retrieve API로 조회시 결과가 없을때에 Query API로 fallback을 best practice로 가이드하고 있습니다. 따라서, FAQ를 사용하고자 한다면, Retrive와 Query API를 모두 사용하여야 합니다.
 
+[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)를 참조합니다. [kendra-faq-refresher](https://github.com/aws-samples/amazon-kendra-faq-refresher/tree/main)를 참조하여 FAQ를 Kendra 검색 결과로 활용할 수 있습니다.
+
+여기서는 [Kendra FAQ](https://github.com/kyopark2014/korean-chatbot-using-amazon-bedrock/blob/main/kendra-faq.md)와 같이 Kendra의 Query API로 FAQ의 결과를 얻으면, 질문과 결과를 함께 excerpt로 활용합니다.
+
+
+#### Langchain 활용하기
+
+LangChain은 Retreive API로 검색하였을대에 결과가 없으면, Query로 한번 더 검색을 수행합니다.
+Kendra에서 한국어 문서를 업로드하면 retriever의 Language 설정을 "ko"로 설정하여야 합니다.
+
+
+### 정확도 개선 방안
+
+- 한글문서의 언어설정을 "ko"로하여 Kendra에 등록합니다.
+- LangChain의 Kendra Retriever로 질의시 language를 "ko"로 설정하여야 retriever api로 더 많은 token을 가지는 발췌문을 얻을 수 있습니다.
+- Kendra의 Retrieve/Query API로 직접 조회하면 좀더 유연하게 RAG를 구현할 수 있습니다.
+- FAQ문서가 있다면, Kendra에 등록하여 활용합니다. FAQ 사용시 Query API를 활용하여하므로, 결과를 얻는 속도를 개선하기 위해 동시에 Retrieve/Query API를 호출합니다.
 
 
 
