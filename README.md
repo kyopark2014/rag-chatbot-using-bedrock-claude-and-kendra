@@ -63,7 +63,7 @@ llm = Bedrock(
 
 ### 메모리 설정
 
-Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 [lambda-chatbot](./lambda-chat-ws/lambda_function.py)와 같이 map을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, user ID를 추출하여 관련 채팅이력을 가진 메모리 맵이 없을 경우에는 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 정의합니다. 
+Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 [lambda-chatbot](./lambda-chat-ws/lambda_function.py)와 같이 map을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, body에서 user ID를 추출하여 관련 채팅이력을 가진 메모리 맵이 없을 경우에는 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 정의합니다. 
 
 ```python
 map_chain = dict()
@@ -76,6 +76,13 @@ if userId in map_chain:
 else:
     memory_chain = ConversationBufferWindowMemory(memory_key="chat_history",output_key='answer',return_messages=True,k=5)
     map_chain[userId] = memory_chain
+```
+
+LLM을 통해 결과를 얻으면 아래와 같이 질문과 응답을 memory_chain에 새로운 dialog로 저장할 수 있습니다.
+
+```python
+memory_chain.chat_memory.add_user_message(text)  # append new diaglog
+memory_chain.chat_memory.add_ai_message(msg)
 ```
 
 ### 문서 등록
