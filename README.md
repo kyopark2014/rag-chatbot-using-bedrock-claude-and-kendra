@@ -36,12 +36,11 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock을 LangChain으로 연결하기
 
-Bedrock 접속을 위해 필요한 region name과 endpoint url을 지정하고, LangChain을 사용할 수 있도록 연결하여 줍니다. 여기서 Bedrock은 aws 개발 계정과 preview 계정이 상이하게 설정합니다.
+아래와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, 사용 LLM은 Antrhopic의 Claude V2를 설정합니다.
 
 ```python
-from langchain.llms.bedrock import Bedrock
-
-bedrock_region = "us-west-2" 
+modelId = 'anthropic.claude-v2’
+bedrock_region = "us-east-1" 
 
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
@@ -53,14 +52,31 @@ boto3_bedrock = boto3.client(
     )
 )
 
-modelId = 'anthropic.claude-v2’
+from langchain.llms.bedrock import Bedrock
 llm = Bedrock(
     model_id=modelId, 
     client=boto3_bedrock, 
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
     model_kwargs=parameters)
 ```
 
-### Kendra
+### 메모리 설정
+
+Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 [lambda-chatbot](./lambda-chat-ws/lambda_function.py)와 같이 map을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, user ID를 추출하여 관련 채팅이력을 가진 메모리 맵이 없을 경우에는 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 정의합니다. 
+
+```python
+map_chain = dict()
+
+jsonBody = json.loads(event.get("body"))
+userId  = jsonBody['user_id']
+
+if userId in map_chain:
+    memory_chain = map_chain[userId]
+else:
+    memory_chain = ConversationBufferWindowMemory(memory_key = "chat_history", output_key = 'answer', return_messages = True, k = 5)
+    map_chain[userId] = memory_chain
+```
 
 ### 문서 등록
 
