@@ -448,8 +448,22 @@ def get_reference(docs):
 ### CDK를 이용한 인프라 설치
 [인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다.
 
+설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
+
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df0c08c2-0740-4558-a1d0-9f228f9726bc)
+
+FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
+
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/71e96a30-1ecb-4f06-9e8e-d459f204fb21)
+
+Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 등록된것을 확인할 수 있습니다.
+
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/f1422fef-768e-4a40-874b-26686ef5699c)
+
 
 ## 실행결과
+
+
 
 #### Q&A Chatbot 시험 결과
 
