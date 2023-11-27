@@ -18,7 +18,7 @@
 
 ## 주요 구성
 
-Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합니다. 그런데 만약 관련된 단어나 유사한 의미의 문장이 없다면, 가장 관련된 문장을 선택하여 알려주는데 때로는 관계가 없는 문장이 관련된 문장으로 선택될 수 있습니다. 따라서, 검색 정확도에 대한 score를 알 수 있다면 RAG의 정확도를 향상 시킬 수 있습니다. 또한, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, 정답에 해당하는 문서를 우선적으로 관련된 문서(Relevant Document)로 활용할 수 있어서 RAG 정확도를 개선할 수 있습니다. 이와같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)와 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)을 활용합니다. 
+Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합니다. 그런데 만약 관련된 단어나 유사한 의미의 문장이 없다면, 가장 관련된 문장을 선택하여 알려주는데 때로는 관계가 없는 문장이 관련된 문장으로 선택될 수 있습니다. 따라서, Kendra로 검색된 문서에 대한 정확도를 score로 알 수 있다면, RAG의 정확도를 향상 시킬 수 있습니다. 또한, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, 정답에 해당하는 문서를 우선적으로 관련된 문서(Relevant Document)로 참조할 수 있어서 RAG 정확도를 개선할 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
 
 Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 본 게기글의 실습에서는 Query API의 ScoreAttribute를 활용하고 검색의 범위를 조정합니다.
 
