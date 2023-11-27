@@ -202,9 +202,6 @@ Kendra의 FAQ는 Query API를 이용하고 검색하고, 아래와 같이 질문
 Kendra는 FAQ들 중에 가장 가까운 답을 주는데, "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 입력하면 전혀 다른 결과를 주어야 하나, Kendra는 "ScoreConfidence"를 "VERY_HIGH"로 "13" 응답합니다. 따라서, Kendra의 FAQ 답변을 그대로 사용하지 말고, 결과에서 질문과 답변으로 "How many free clinics are in Spokane WA? 13"와 같은 문장을 만들어서 RAG에서 관련 문서(relevant doc)로 활용합니다.
 
 
-
-
-
 ### Kendra에서 문서 조회하기
 
 Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌를 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 retrieve API를 사용한 후에 결과가 없으면 query API로 fallback을 수행합니다. 
@@ -303,7 +300,7 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
-### 관련 문서의 조회
+### 채팅이력을 이용하여 새로운 질문 생성
 
 채팅화면에서 대화에서 Q&A를 수행하려면, 이전 채팅 이력과 현재의 질문을 이용하여 새로운 질문을 생성하여야 합니다. 여기서는 질문이 한글/영어 인지를 확인하여 다른 Prompt를 이용하여 새로운 질문(revised_question)을 생성합니다. 
 
