@@ -78,7 +78,7 @@ memory_chain.chat_memory.add_user_message(text)
 memory_chain.chat_memory.add_ai_message(msg)
 ```
 
-### 문서 등록
+### Kendra에 문서 등록하기
 
 파일업로드후 링크를 제공할 수 있도록 파일이 저장된 S3의 파일명과 CloudFront의 도메인 주소를 이용하여 source_uri를 생성합니다. 이때 파일명에 공백등이 들어있을 수 있으므로 URL Encoding을 수행합니다. 또한, S3 Object의 파일 확장자를 추출해서 적절한 파일 타입으로 변환합니다. 
 
@@ -300,7 +300,7 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
-### 채팅이력을 이용하여 새로운 질문 생성
+### 채팅이력을 이용하여 새로운 질문 생성하기
 
 채팅화면에서 대화에서 Q&A를 수행하려면, 이전 채팅 이력과 현재의 질문을 이용하여 새로운 질문을 생성하여야 합니다. 여기서는 질문이 한글/영어 인지를 확인하여 다른 Prompt를 이용하여 새로운 질문(revised_question)을 생성합니다. 
 
@@ -335,7 +335,7 @@ def get_revised_question(connectionId, requestId, query):
     return revised_question
 ```    
 
-### RAG를 이용한 결과 확인
+### RAG를 이용한 결과 확인하기
 
 Kendra에 top_k개의 관련된 문서를 요청하여 받은 후에 아래와 같이 발취문(excerpt)를 추출하여 한개의 relevant_context를 생성합니다. 이후 아래와 같이 RAG용으로 만든 Prompt를 생성합니다. 
 
