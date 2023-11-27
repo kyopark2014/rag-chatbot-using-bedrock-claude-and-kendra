@@ -274,8 +274,6 @@ return doc_info
 ```
 
 
-#### Query API
-
 [Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 relevant document로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"인 문서들만 relevant docs로 활용하고 있습니다. 
 
 ```python
@@ -305,6 +303,127 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
+### 관련 문서의 조회
+
+채팅화면에서 대화에서 Q&A를 수행하려면, 이전 채팅 이력과 현재의 질문을 이용하여 새로운 질문을 생성하여야 합니다. 여기서는 질문이 한글/영어 인지를 확인하여 다른 Prompt를 이용하여 새로운 질문(revised_question)을 생성합니다. 
+
+```python
+def get_revised_question(connectionId, requestId, query):        
+    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')  # check korean
+    word_kor = pattern_hangul.search(str(query))
+
+    if word_kor and word_kor != 'None':
+        condense_template = """{chat_history}
+        Human: 이전 대화와 다음의 <question>을 이용하여, 새로운 질문을 생성하여 질문만 전달합니다.
+
+        <question>            
+        {question}
+        </question>
+            
+        Assistant: 새로운 질문:"""
+    else: 
+        condense_template = """{chat_history}    
+        Answer only with the new question.
+
+        Human: How would you ask the question considering the previous conversation: {question}
+
+        Assistant: Standalone question:"""
+
+    condense_prompt_claude = PromptTemplate.from_template(condense_template)        
+    condense_prompt_chain = LLMChain(llm=llm, prompt=condense_prompt_claude)
+
+    chat_history = extract_chat_history_from_memory()
+    revised_question = condense_prompt_chain.run({"chat_history": chat_history, "question": query})
+    
+    return revised_question
+```    
+
+### RAG를 이용한 결과 확인
+
+Kendra에 top_k개의 관련된 문서를 요청하여 받은 후에 아래와 같이 발취문(excerpt)를 추출하여 한개의 relevant_context를 생성합니다. 이후 아래와 같이 RAG용으로 만든 Prompt를 생성합니다. 
+
+```python
+relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
+
+relevant_context = ""
+for document in relevant_docs:
+    relevant_context = relevant_context + document['metadata']['excerpt'] + "\n\n"
+
+PROMPT = get_prompt_template(revised_question, convType)
+def get_prompt_template(query, convType):
+    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
+    word_kor = pattern_hangul.search(str(query))
+
+    if word_kor and word_kor != 'None':
+        prompt_template = """\n\nHuman: 다음의 <context>를 참조하여 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
+        
+        <context>
+        {context}
+        </context>
+
+        <question>
+        {question}
+        </question>
+
+        Assistant:"""
+                
+    else:  # English
+        prompt_template = """\n\nHuman: Here is pieces of context, contained in <context> tags. Provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
+            
+        <context>
+        {context}
+        </context>
+                        
+        <question>
+        {question}
+        </question>
+
+        Assistant:"""
+return PromptTemplate.from_template(prompt_template)
+```
+
+Prompt를 이용하여 관련된 문서를 context로 제공하고 새로운 질문(revised_question)을 전달한 후에 응답을 확인합니다. 관련된 문서(relevant_docs)에서 "title", "_excerpt_page_number", "source"를 추출하여 reference로 추가합니다. 이때 FAQ의 경우는 source uri를 제공할 수 없으므로 아래와 같이 alert으로 FAQ의 quetion/answer 정보를 화면에 보여줍니다. 
+
+```python
+try: 
+    stream = llm(PROMPT.format(context=relevant_context, question=revised_question))
+    msg = readStreamMsg(connectionId, requestId, stream)
+except Exception:
+    raise Exception ("Not able to request to LLM")    
+
+if len(relevant_docs)>=1 and enableReference=='true':
+    msg = msg+get_reference(relevant_docs)
+
+def get_reference(docs):
+    reference = "\n\nFrom\n"
+    for i, doc in enumerate(docs):
+        if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
+            uri = doc['metadata']['source']
+            name = doc['metadata']['title']
+            reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>\n"
+        else: # Query
+            confidence = doc['confidence']
+            if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
+                excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
+                reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
+            else:
+                uri = ""
+                if "title" in doc['metadata']:
+                    name = doc['metadata']['title']
+                    if name: 
+                        uri = path+parse.quote(name)
+
+                page = ""
+                if "document_attributes" in doc['metadata']:
+                    if "_excerpt_page_number" in doc['metadata']['document_attributes']:
+                        page = doc['metadata']['document_attributes']['_excerpt_page_number']
+                                        
+                if page: 
+                    reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                elif uri:
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"        
+    return reference
+```
 
 ## 직접 실습 해보기
 
