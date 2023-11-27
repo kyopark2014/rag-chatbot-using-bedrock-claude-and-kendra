@@ -460,6 +460,7 @@ Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 �
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/f1422fef-768e-4a40-874b-26686ef5699c)
 
+이후 Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다.
 
 ## 실행결과
 
