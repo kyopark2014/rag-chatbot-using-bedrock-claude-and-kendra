@@ -277,19 +277,7 @@ return doc_info
 
 #### Query API
 
-[Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, "DOCUMENT", "QUESTION_ANSWER", "ANSWER" Type의 결과를 얻을 수 있습니다.
-
-- ANSWER: 관련 제안된 답변(Relevant suggested answers)으로 text나 table의 발취(excerpt)로서 강조 표시(highlight)를 지원합니다. 
-- QUESTION_ANSWER: 관련된 FAQ(Matching FAQs) 또는 FAQ 파일에서 얻은 question-answer입니다.
-- DOCUMENT: 관련된 문서(Relevant documents)로서 문서의 발취(excerpt)와 title을 포하한 결고로서 강조 표시(hightlight)를 지원합니다.
-
-관련 파라메터는 아래와 같습니다.
-
-- QueryResultTypeFilter로 type을 지정할 수 있습니다.
-- PageSize: 관련된 문장을 몇개까지 가져올지 지정합니다.
-- PageNumber: 기본값은 결과의 첫페이지입니다. 첫페이지 이후의 결과를 가져올때 지정합니다.
-
-Retrieve API로 결과를 조회한 후에 Query API를 이용하여 FAQ를 조회합니다. 이때, [QueryResultTypeFilter](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Query.html)을 "QUESTION_ANSWER"로 설정하면 FAQ의 결과만을 얻을 수 있습니다. 
+[Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 relevant document로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"인 문서들만 relevant docs로 활용하고 있습니다. 
 
 ```python
 resp = kendra_client.query(
@@ -317,24 +305,6 @@ if len(resp["ResultItems"]) >= 1:
     if len(relevant_docs) >= top_k:
         break
 ```
-
-
-
-
-
-#### Langchain 활용하기
-
-LangChain은 Retreive API로 검색하였을대에 결과가 없으면, Query로 한번 더 검색을 수행합니다.
-Kendra에서 한국어 문서를 업로드하면 retriever의 Language 설정을 "ko"로 설정하여야 합니다.
-
-
-### 정확도 개선 방안
-
-- 한글문서의 언어설정을 "ko"로하여 Kendra에 등록합니다.
-- LangChain의 Kendra Retriever로 질의시 language를 "ko"로 설정하여야 retriever api로 더 많은 token을 가지는 발췌문을 얻을 수 있습니다.
-- Kendra의 Retrieve/Query API로 직접 조회하면 좀더 유연하게 RAG를 구현할 수 있습니다.
-- FAQ문서가 있다면, Kendra에 등록하여 활용합니다. FAQ 사용시 Query API를 활용하여하므로, 결과를 얻는 속도를 개선하기 위해 동시에 Retrieve/Query API를 호출합니다.
-
 
 
 ## 직접 실습 해보기
