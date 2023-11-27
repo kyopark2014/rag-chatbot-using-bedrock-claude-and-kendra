@@ -45,6 +45,19 @@ boto3_bedrock = boto3.client(
     )
 )
 
+HUMAN_PROMPT = "\n\nHuman:"
+AI_PROMPT = "\n\nAssistant:"
+def get_parameter(modelId):
+    if modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+        return {
+            "max_tokens_to_sample":8191, # 8k
+            "temperature":0.1,
+            "top_k":250,
+            "top_p":0.9,
+            "stop_sequences": [HUMAN_PROMPT]            
+        }
+parameters = get_parameter(modelId)
+
 from langchain.llms.bedrock import Bedrock
 llm = Bedrock(
     model_id=modelId, 
