@@ -18,9 +18,7 @@
 
 ## 주요 구성
 
-본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)와 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)을 활용합니다. 
-
-Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합니다. 그런데 만약 관련된 단어나 유사한 의미의 문장이 없다면, 가장 관련된 문장을 선택하여 알려주는데 때로는 관계가 없는 문장이 관련된 문장으로 선택될 수 있습니다. 따라서, 검색 정확도에 대한 score를 알 수 있다면 RAG의 정확도를 향상 시킬 수 있습니다. 
+Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합니다. 그런데 만약 관련된 단어나 유사한 의미의 문장이 없다면, 가장 관련된 문장을 선택하여 알려주는데 때로는 관계가 없는 문장이 관련된 문장으로 선택될 수 있습니다. 따라서, 검색 정확도에 대한 score를 알 수 있다면 RAG의 정확도를 향상 시킬 수 있습니다. 또한, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, 정답에 해당하는 문서를 우선적으로 관련된 문서(Relevant Document)로 활용할 수 있어서 RAG 정확도를 개선할 수 있습니다. 이와같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)와 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)을 활용합니다. 
 
 Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 본 게기글의 실습에서는 Query API의 ScoreAttribute를 활용하고 검색의 범위를 조정합니다.
 
@@ -163,7 +161,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ### FAQ 활용하기
 
-자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, RAG의 정확도를 개선할 수 있습니다. [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 아래의 [FAQ 예제](./contents/faq/demo.csv)를 등록후에 "How many free clinics are in Spokane WA?"를 질문하면 답변은 13이고, 참고 자료에 대한 uri를 확인할 수 있습니다.
+[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 아래의 [FAQ 예제](./contents/faq/demo.csv)를 등록후에 "How many free clinics are in Spokane WA?"를 질문하면 답변은 13이고, 참고 자료에 대한 uri를 확인할 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
 
