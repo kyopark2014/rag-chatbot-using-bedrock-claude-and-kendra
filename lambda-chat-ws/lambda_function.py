@@ -593,7 +593,7 @@ def retrieve_from_Kendra(query, top_k):
                 },
             },      
         )
-        print('retrieve resp:', json.dumps(resp))
+        # print('retrieve resp:', json.dumps(resp))
         query_id = resp["QueryId"]
 
         if len(resp["ResultItems"]) >= 1:
@@ -851,9 +851,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         revised_question = get_revised_question(connectionId, requestId, text) # generate new prompt using chat history
         print('revised_question: ', revised_question)
         if debugMessageMode=='true':
-            sendDebugMessage(connectionId, requestId, '[Debug]: '+revised_question)
-        PROMPT = get_prompt_template(revised_question, convType)
-        #print('PROMPT: ', PROMPT)
+            sendDebugMessage(connectionId, requestId, '[Debug]: '+revised_question)        
 
         relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
         print('relevant_docs: ', json.dumps(relevant_docs))
@@ -863,6 +861,8 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
             relevant_context = relevant_context + document['metadata']['excerpt'] + "\n\n"
         print('relevant_context: ', relevant_context)
 
+        PROMPT = get_prompt_template(revised_question, convType)
+        #print('PROMPT: ', PROMPT)
         try: 
             stream = llm(PROMPT.format(context=relevant_context, question=revised_question))
             msg = readStreamMsg(connectionId, requestId, stream)
