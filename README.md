@@ -18,6 +18,11 @@
 
 ## 주요 구성
 
+본 게시글의 Kendra를 이용한 검색 정확도를 높이기 위하여, FAQ와 ScoreAttributes를 활용합니다. 
+
+Kendra는 자연어 검색을 통해 가장 유사한 문서의 발췌문을 제공하는데, 만약 관련된 단어나 유사한 의미가 없다고 하더라도 가장 관련된 문장을 선택하여 알려줍니다. 따라서, 때로는 관계가 없는 문장이 관련된 문장으로 선택되어 RAG의 정확도에 영향을 줄수 있습니다. 따라서, 검색의 관련도에 따른 score를 알수 있다면 RAG의 정확도를 향상 시킬 수 있습니다. Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 본 게기글의 실습에서는 Query API의 ScoreAttribute를 활용하고 검색의 범위를 조정합니다.
+
+
 ### Kendra 준비
 
 AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
@@ -136,12 +141,6 @@ def store_document_for_kendra(path, s3_file_name, requestId):
         Documents = documents       
     )
 ```
-
-### Score 활용하기 
-
-검색의 정확도(score)를 활용하여 검색의 범위를 조정하면 RAG의 정확도가 올라갑니다. 그런데, Retrieve는 2023년 11월(현재)까지 영어(en)에 대해서만 score를 제공하고 있습니다. 따라서, 한국어(ko)는 token수가 적은 Query API를 이용할때만 score를 활용할 수 있습니다.
-
-[ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 확인할 수 있습니다.
 
 
 ### FAQ 활용하기
