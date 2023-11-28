@@ -330,8 +330,12 @@ def get_revised_question(connectionId, requestId, query):
     word_kor = pattern_hangul.search(str(query))
 
     if word_kor and word_kor != 'None':
-        condense_template = """{chat_history}
-        Human: 이전 대화와 다음의 <question>을 이용하여, 새로운 질문을 생성하여 질문만 전달합니다.
+        condense_template = """
+        <history>
+        {chat_history}
+        </history>
+
+        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 생성하세요.
 
         <question>            
         {question}
@@ -339,10 +343,17 @@ def get_revised_question(connectionId, requestId, query):
             
         Assistant: 새로운 질문:"""
     else: 
-        condense_template = """{chat_history}    
+        condense_template = """
+        <history>
+        {chat_history}
+        </history>
         Answer only with the new question.
 
-        Human: How would you ask the question considering the previous conversation: {question}
+        Human: using <history>, rephrase the follow up <question> to be a standalone question.
+         
+        <quesion>
+        {question}
+        </question>
 
         Assistant: Standalone question:"""
 
