@@ -197,7 +197,7 @@ Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('Q
                }
             }
          ],
-         "DocumentId":"c24c0fe9cbdfa412ac58d1b5fc07dfd4afd21cbd0f71df499f305296d985a8c9a91f1b2c-e28b-4d13-8b01-8a33be5fc126",
+         "DocumentId":"c24c0fe9cbdfa412ac58d1296d985a8c9a91f1b2c-e28b-4d13-8b01-8a33be5fc126",
          "DocumentURI":"https://www.freeclinics.com/",
          "DocumentAttributes":[
             {
