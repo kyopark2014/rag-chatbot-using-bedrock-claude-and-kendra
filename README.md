@@ -32,7 +32,7 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
-아래와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2을 LLM으로 설정합니다.
+[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2을 LLM으로 설정합니다.
 
 ```python
 modelId = 'anthropic.claude-v2’
@@ -72,7 +72,7 @@ llm = Bedrock(
 
 ### 채팅이력을 저장하기 위한 메모리 준비 및 Dialog 저장
 
-Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 [lambda-chatbot](./lambda-chat-ws/lambda_function.py)와 같이 map을 정의합니다. 클라이언트의 요청이 event로 Lambda에 전달되면, body에서 user ID를 추출하여 관련 채팅이력을 가진 메모리 맵이 없을 경우에는 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 정의합니다. 
+Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 [lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 map을 정의합니다. 클라이언트의 요청이 event로 Lambda에 전달되면, body에서 user ID를 추출하여 관련 채팅이력을 가진 메모리 맵이 없을 경우에는 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 정의합니다. 
 
 ```python
 map_chain = dict()
@@ -96,9 +96,7 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### Kendra에 문서 등록하기
 
-업로드 후에 문서에 대한 링크를 제공할 수 있도록 파일이 저장된 S3의 파일명과 CloudFront의 도메인 주소를 이용하여 source_uri를 생성합니다. 이때 파일명에 공백등이 들어있을 수 있으므로 URL Encoding을 수행합니다. 또한, S3 Object의 파일 확장자를 추출해서 적절한 파일 타입으로 변환합니다. 
-
-파일 속성으로 "_language_code"를 "ko"로 설정하였고 [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 업로드를 수행합니다. 이때 S3를 이용해 업로드 할 수 있는 Document의 크기는 50MB이며, [문서포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)와 같이 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원합니다.
+업로드 후에 문서에 대한 링크를 제공할 수 있도록 파일이 저장된 S3의 파일명과 CloudFront의 도메인 주소를 이용하여 "source_uri"를 생성합니다. 이때 파일명에 공백등이 들어있을 수 있으므로 URL Encoding을 수행합니다. 또한, S3 Object의 파일 확장자를 추출해서 적절한 파일 타입으로 변환합니다. 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정하고 [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 업로드를 수행합니다. 이때 S3를 이용해 업로드 할 수 있는 Document의 크기는 50MB이며, [문서포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)와 같이 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원합니다.
 
 ```java
 def store_document_for_kendra(path, s3_file_name, requestId):
@@ -114,6 +112,8 @@ def store_document_for_kendra(path, s3_file_name, requestId):
         file_type = 'MS_EXCEL'      
     elif(ext == 'DOC' or ext == 'DOCX'):
         file_type = 'MS_WORD'
+    else:
+        file_type = ext
 
     kendra_client = boto3.client(
         service_name='kendra', 
@@ -161,11 +161,13 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ### FAQ 활용하기
 
-[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 이때 [인덱스당 등록할 수 있는 FAQ의 수](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-522F5A9C)는 기본이 30개이고 Quota 조정 가능합니다. 아래의 [FAQ 예제](./contents/faq/demo.csv)를 등록후에 "How many free clinics are in Spokane WA?"를 질문하면 답변은 13이고, 참고 자료에 대한 uri를 확인할 수 있습니다.
+[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 이때 [index당 등록할 수 있는 FAQ의 수](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-522F5A9C)는 기본이 30개이고 Quota는 조정이 가능합니다. 
+
+[FAQ 예제](./contents/faq/demo.csv)와 Console에서 FAQ를 등록할 수 있습니다. 등록한 후에 "How many free clinics are in Spokane WA?"와 같은 질문을 전달하면 답변으로 13을 줍니다. 또한 자료에 대한 uri도 확인할 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
 
-Kendra의 FAQ는 Query API를 이용하고 검색하고, 아래와 같이 질문('QuestionText'), 답변('AnswerText'), URI('_source_uri')에 대한 정보뿐 아니라, 'ScoreConfidence'로 'VERY_HIGH'을 얻을 수 있습니다. [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)는 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도를 제공합니다. 따라서, 'ScoreConfidence'의 범위를 제한하면 좀더 신뢰할만한 관련문서를 얻을 수 있습니다.
+Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('QuestionText'), 답변('AnswerText'), URI('_source_uri')에 대한 정보뿐 아니라, [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도 값을 제공합니다. 이때, 'ScoreConfidence'의 범위를 'VERY_HIGH"로 제한하면 좀더 신뢰할만한 관련문서를 얻을 수 있습니다.
 
 ```java
 {
@@ -215,7 +217,7 @@ Kendra의 FAQ는 Query API를 이용하고 검색하고, 아래와 같이 질문
 }
 ```
 
-Kendra료 요청을 하면 FAQ의 질문(Question)에 대해 가장 가까운 답(Answer)을 주므로, "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 FAQ 질문중에 가장 가까운 항목을 결과로 전달할 수 있습니다. 따라서, 이 경우에 Kendra는 "ScoreConfidence"가 "VERY_HIGH"이면서, 여전히 "13"으로 응답을 전달할 수 있습니다. 따라서, Kendra의 FAQ 조회 결과가 "VERY_HIGH"이더라도 그대로 사용할 수 없고, "How many free clinics are in Spokane WA? 13"와 같이 전체 문장을 관련 문서(relevant doc)로 활용하여야 합니다.
+사용자가 질문을 하면, Kendra는 FAQ의 질문(Question)과 가장 가까운 답(Answer)을 전달합니다. 만약 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 FAQ 질문중에 가장 가까운 항목으로 "How many free clinics are in Spokane WA?"의 답인 13을 응답으로 전달할 수 있습니다. 이 경우에 때로는 "ScoreConfidence"가 "VERY_HIGH" 같은 높은 신뢰도를 가질수 있ㅇ므르ㅗ, Kendra의 FAQ 조회 결과를 "ScoreConfidence"만 보고 사용할 수 없습니다. 따라서, "How many free clinics are in Spokane WA? 13"와 같이 질문/답변을 모두 관련 문서(relevant doc)로 전달하여 LLM이 최종적으로 답변을 구하여야 합니다. 
 
 
 ### Kendra에서 문서 조회하기
