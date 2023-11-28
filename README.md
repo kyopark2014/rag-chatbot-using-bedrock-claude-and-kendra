@@ -231,7 +231,7 @@ Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.
   
 파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, retrieve API를 이용하여 관련 문서를 검색할 때에도 동일하게 설정합니다. [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
 
-QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다.
+QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다.
 
 ```python
 resp = kendra_client.retrieve(
