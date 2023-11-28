@@ -224,7 +224,7 @@ Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.
 
 
 
-[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. [Retrieve API는 2023년 11월 현재에 영어(en)만 Confidence score를 제공](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)합니다. 또한, Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)도 지원하지 않습니다.
+[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문(passges)는 200개의 token으로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 이런 발췌문을 얻을 수 있습니다. 200 개의 token으로 구성된 발췌문(passage)과 최대 100개의 의미론적으로 관련된 발췌문을 검색할 수 있습니다. [Retrieve API는 2023년 11월 현재에 영어(en)만 Confidence score를 제공](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)합니다. 또한, Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)도 지원하지 않습니다.
 
 
 
