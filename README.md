@@ -217,7 +217,7 @@ Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('Q
 }
 ```
 
-사용자가 질문을 하면, Kendra는 FAQ의 질문(Question)과 가장 가까운 답(Answer)을 전달합니다. 만약 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 FAQ 질문중에 가장 가까운 항목으로 "How many free clinics are in Spokane WA?"의 답인 13을 응답으로 전달할 수 있습니다. 이 경우에 때로는 "ScoreConfidence"가 "VERY_HIGH" 같은 높은 신뢰도를 가질수 있ㅇ므르ㅗ, Kendra의 FAQ 조회 결과를 "ScoreConfidence"만 보고 사용할 수 없습니다. 따라서, "How many free clinics are in Spokane WA? 13"와 같이 질문/답변을 모두 관련 문서(relevant doc)로 전달하여 LLM이 최종적으로 답변을 구하여야 합니다. 
+사용자가 질문을 하면, Kendra는 FAQ의 질문(Question)과 가장 가까운 답(Answer)을 전달합니다. 만약 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 FAQ 질문중에 가장 가까운 항목으로 "How many free clinics are in Spokane WA?"의 답인 13을 응답으로 전달할 수 있습니다. 이 경우에 때로는 "ScoreConfidence"가 "VERY_HIGH" 같은 높은 신뢰도를 가질수 있ㅇ므르ㅗ, Kendra의 FAQ 조회 결과를 "ScoreConfidence"만 보고 사용할 수 없습니다. 따라서, "How many free clinics are in Spokane WA? 13"와 같이 질문/답변을 모두 관련 문서(relevant doc)로 전달하여 LLM이 최종적으로 답변을 구하여야 합니다. 
 
 
 ### Kendra에서 문서 조회하기
