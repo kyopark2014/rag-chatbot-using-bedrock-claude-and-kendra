@@ -215,7 +215,7 @@ Kendra의 FAQ는 Query API를 이용하고 검색하고, 아래와 같이 질문
 }
 ```
 
-Kendra료 요청을 하면 FAQ의 질문(Question)에 대해 가장 가까운 답(Answer)을 주므로, "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 질문중에 가장 가까운 FAQ를 결과를 전달할 수 있습니다. 따라서, 이 경우에 Kendra는 "ScoreConfidence"가 "VERY_HIGH"이면서, 여전히 "13"으로 응답을 전닳할 수 있습ㄴ디ㅏ. 따라서, Kendra의 FAQ 답변이 "VERY_HIGH"이더라도, 그대로 사용할 수 없고, "How many free clinics are in Spokane WA? 13"와 같이 전체 문장을 관련 문서(relevant doc)로 활용하여야 합니다.
+Kendra료 요청을 하면 FAQ의 질문(Question)에 대해 가장 가까운 답(Answer)을 주므로, "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도 질문중에 가장 가까운 FAQ를 결과를 전달할 수 있습니다. 따라서, 이 경우에 Kendra는 "ScoreConfidence"가 "VERY_HIGH"이면서, 여전히 "13"으로 응답을 전달할 수 있습니다. 따라서, Kendra의 FAQ 답변이 "VERY_HIGH"이더라도, 그대로 사용할 수 없고, "How many free clinics are in Spokane WA? 13"와 같이 전체 문장을 관련 문서(relevant doc)로 활용하여야 합니다.
 
 
 ### Kendra에서 문서 조회하기
