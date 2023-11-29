@@ -464,10 +464,6 @@ def get_reference(docs):
 
 설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
 
-FAQ에 있는 "금융인증서 해외에서 발급할 수 있나요?"은 질문을 하면 아래처럼 먼저 FAQ의 결과를 반영할 수 있었습니다.
-
-![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df7a8e77-23d6-4419-87de-38780da58128)
-
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df0c08c2-0740-4558-a1d0-9f228f9726bc)
 
@@ -483,7 +479,18 @@ Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 �
 
 ## 실행결과
 
-[fsi_faq_ko.csv](https://github.com/kyopark2014/question-answering-chatbot-with-vector-store/blob/main/fsi_faq_ko.csv)을 다운로드 하고, 채팅창의 파일 아이콘을 선택하여 업로드합니다. 이후 아래와 같이 채팅창에 "이체를 할수 없다고 나옵니다. 어떻게 해야 하나요?” 라고 입력하고 결과를 확인합니다.
+
+[fsi_faq_ko.csv](https://github.com/kyopark2014/question-answering-chatbot-with-vector-store/blob/main/fsi_faq_ko.csv)을 다운로드 하고, 채팅창의 파일 아이콘을 선택하여 업로드합니다. 
+
+
+FAQ에 있는 "금융인증서 해외에서 발급할 수 있나요?"은 질문을 하면 아래처럼 먼저 FAQ의 결과를 반영할 수 있었습니다.
+
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df7a8e77-23d6-4419-87de-38780da58128)
+
+
+
+
+아래와 같이 채팅창에 "이체를 할수 없다고 나옵니다. 어떻게 해야 하나요?” 라고 입력하고 결과를 확인합니다.
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/849169c3-c9ee-40dd-8e44-0ec308688ce6)
 
