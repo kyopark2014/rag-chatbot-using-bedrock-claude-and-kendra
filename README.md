@@ -229,15 +229,9 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 
 ### Kendra에서 문서 조회하기
 
-Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌문을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 fallback을 수행합니다.
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌문을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 fallback을 수행합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 그밖에 Querry API는 Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)를 지원하고 있습니다. 
 
-[Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. [Retrieve API는 2023년 11월 현재에 영어(en)만 Confidence score를 제공](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)합니다. 
-  
-파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, retrieve API를 이용하여 관련 문서를 검색할 때에도 동일하게 설정합니다. [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
-
-QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다.
-
-Querry API는 Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)을 지원합니다. 
+파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, Kendra의 retrieve는 동일한 방식으로 "_language_code"을 설정하여 검색을 수행하여야 합니다. 또한, 아래와 같이 [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
 
 ```python
 resp = kendra_client.retrieve(
