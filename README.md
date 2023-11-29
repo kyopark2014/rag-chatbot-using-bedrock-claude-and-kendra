@@ -22,7 +22,6 @@ Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합�
 
 Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API의 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
 
-LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와[ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)는 RAG를 활용하기 쉬도록 표준화된 인터페이스를 제공하지만, Kendra의 FAQ나 ScoreAttributes을 이용할 수 없습니다. 따라서, 여기에서는 [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 동일한 동작을 구현합니다.
 
 
 
@@ -218,6 +217,11 @@ Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('Q
 ```
 
 상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, 잘못된 답변인 "13"을 "VERY_HIGH"와 같은 높은 신뢰도로 응답을 줄 수 있습니다. 따라서, 여기에서는 FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같은 문장으로 만들어서, RAG의 관련 문서(relevant doc)로서 사용합니다. 이를 통해 유사 질문이지만, 답변이 전혀 다른 경우를 구분하여 처리할 수 있습니다.
+
+
+### LangChain의 활용
+
+LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와[ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)는 RAG를 활용하기 쉬도록 표준화된 인터페이스를 제공하지만, Kendra의 FAQ나 ScoreAttributes을 이용할 수 없습니다. 따라서, 여기에서는 [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 동일한 동작을 구현합니다.
 
 
 
