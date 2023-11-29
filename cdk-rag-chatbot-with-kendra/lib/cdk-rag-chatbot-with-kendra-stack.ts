@@ -29,6 +29,7 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 
 const enableReference = 'true';
 const debugMessageMode = 'false'; // if true, debug messages will be delivered to the client.
+const numberOfRelevantDocs = '10';
 
 export class CdkRagChatbotWithKendraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -469,6 +470,7 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         roleArn: roleLambdaWebsocket.roleArn,
         debugMessageMode: debugMessageMode,
         rag_method: rag_method,
+        numberOfRelevantDocs: numberOfRelevantDocs
       }
     });
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
