@@ -217,7 +217,7 @@ Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('Q
 }
 ```
 
-상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, 잘못된 답변인 "13"을 "VERY_HIGH"와 같은 높은 신뢰도로 응답을 줄 수 있습니다. 따라서, 여기에서는 FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같은 문장으로 만들어서, RAG의 관련 문서(relevant doc)로서 사용합니다. 이를 통해 유사하지만 전혀 다른 의미의 질문이 있을 경우를 구분하여 처리할 수 있습니다.
+상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하더라도, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, 잘못된 답변인 "13"을 "VERY_HIGH"와 같은 높은 신뢰도로 응답을 줄 수 있습니다. 따라서, 여기에서는 FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같은 문장으로 만들어서, RAG의 관련 문서(relevant doc)로서 사용합니다. 이를 통해 유사 질문이지만, 답변이 전혀 다른 경우를 구분하여 처리할 수 있습니다.
 
 
 
