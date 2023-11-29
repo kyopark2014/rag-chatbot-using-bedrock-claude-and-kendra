@@ -301,7 +301,7 @@ return doc_info
 resp = kendra_client.query(
     IndexId = index_id,
     QueryText = query,
-    PageSize = 4,
+    PageSize = int(top_k/2),
     QueryResultTypeFilter = "QUESTION_ANSWER",  
     AttributeFilter = {
         "EqualsTo": {
