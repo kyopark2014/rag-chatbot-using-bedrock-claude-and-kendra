@@ -42,11 +42,11 @@ rag_method = os.environ.get('rag_method', 'RetrievalPrompt') # RetrievalPrompt, 
 
 enableReference = os.environ.get('enableReference', 'false')
 debugMessageMode = os.environ.get('debugMessageMode', 'false')
-top_k = 8
 path = os.environ.get('path')
-
 kendraIndex = os.environ.get('kendraIndex')
 roleArn = os.environ.get('roleArn')
+numberOfRelevantDocs = os.environ.get('numberOfRelevantDocs', '10')
+top_k = int(numberOfRelevantDocs)
 
 # websocket
 connection_url = os.environ.get('connection_url')
@@ -443,7 +443,7 @@ def get_revised_question(connectionId, requestId, query):
         {chat_history}
         </history>
 
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 생성하세요.
+        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요.
 
         <question>            
         {question}
@@ -624,7 +624,7 @@ def retrieve_from_Kendra(query, top_k):
                 resp =  kendra_client.query(
                     IndexId = index_id,
                     QueryText = query,
-                    PageSize = 4,
+                    PageSize = int(top_k/2),
                     QueryResultTypeFilter = "QUESTION_ANSWER",  # 'QUESTION_ANSWER', 'ANSWER', "DOCUMENT"
                     AttributeFilter = {
                         "EqualsTo": {      
@@ -644,7 +644,7 @@ def retrieve_from_Kendra(query, top_k):
                         confidence = query_result["ScoreAttributes"]['ScoreConfidence']
 
                         #if confidence == 'VERY_HIGH' or confidence == 'HIGH' or confidence == 'MEDIUM': 
-                        if confidence == 'VERY_HIGH': 
+                        if confidence == 'VERY_HIGH' or confidence == 'HIGH': 
                             relevant_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="query", query_result=query_result))
 
                             if len(relevant_docs) >= top_k:
