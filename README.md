@@ -485,20 +485,18 @@ Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 �
 
 채팅창에 "이체를 할수 없다고 나옵니다. 어떻게 해야 하나요?” 라고 입력하고 결과를 확인합니다.
 
-![image](https://github.com/kyopark2014/question-answering-chatbot-with-kendra/assets/52392004/f51a0cbf-a337-44ed-9a14-dd46e7fa7a6c)
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/849169c3-c9ee-40dd-8e44-0ec308688ce6)
 
 
 채팅창에 "간편조회 서비스를 영문으로 사용할 수 있나요?” 라고 입력합니다. "영문뱅킹에서는 간편조회서비스 이용불가"하므로 좀더 자세한 설명을 얻었습니다.
 
-
-![image](https://github.com/kyopark2014/question-answering-chatbot-with-kendra/assets/52392004/28b5c489-fa35-4896-801c-4609ebb68266)
-
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/3a896488-af0c-42b2-811b-d2c0debf5462)
 
 채팅창에 "공동인증서 창구발급 서비스는 무엇인가요?"라고 입력하고 결과를 확인합니다.
 
-![image](https://github.com/kyopark2014/question-answering-chatbot-with-kendra/assets/52392004/a0024c28-a0a4-4f18-b459-a9737c95db77)
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/2e2b2ae1-7c50-4c14-968a-6c58332d99af)
 
-
+대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다.
 
 ## Reference 
 
