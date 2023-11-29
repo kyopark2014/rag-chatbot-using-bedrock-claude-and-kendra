@@ -221,7 +221,7 @@ Kendra의 FAQ는 Query API를 이용해 검색하고, 아래와 같이 질문('Q
 
 ### LangChain의 활용
 
-LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와[ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)는 RAG를 활용하기 쉬도록 표준화된 인터페이스를 제공하지만, Kendra의 FAQ나 ScoreAttributes을 이용할 수 없습니다. 따라서, 여기에서는 [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 동일한 동작을 구현합니다. 만약, RetrievalQA나 ConversationalRetrievalChain을 사용하기를 원할 경우에는 아래와 같이 [lambda-chat](./lambda-chat-ws/lambda_function.py)에서 rag_method를 변경하여 사용할 수 있습니다. 
+LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와[ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)은 kendra retriever를 이용하여 편리하게 RAG를 사용할 수 있도록 도와줍니다. 만약, RetrievalQA나 ConversationalRetrievalChain을 사용하기를 원할 경우에는 아래와 같이 [lambda-chat](./lambda-chat-ws/lambda_function.py)에서 rag_method를 변경하여 사용할 수 있습니다. 본 게시글에서는 Kendra의 FAQ와 ScoreAttributes을 활용하기 위하여, Kendra를 boto3로 직접 조회하고, [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 RAG을 구현합니다. 
 
 ```python
 rag_method = os.environ.get('rag_method', 'RetrievalPrompt') 
