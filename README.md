@@ -95,7 +95,7 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### Kendra에 문서 등록하기
 
-업로드 후에 문서에 대한 링크를 제공할 수 있도록 파일이 저장된 S3의 파일명과 CloudFront의 도메인 주소를 이용하여 "source_uri"를 생성합니다. 이때 파일명에 공백등이 들어 있을 수 있으므로 "s3_file_name"은 URL Encoding을 수행합니다. 또한, S3 Object의 파일 확장자를 추출해서 적절한 문서 타입으로 변환합니다. S3를 업로드 할 수 있는 [문서 포맷](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원며, 문서의 크기는 최대 50MB입니다.  
+업로드 후에 문서에 대한 링크는 문서 속성의 "source_uri"로 등록되어 활용됩니다. 본 게시글의 실습에선 CloudFront를 S3와 연결하여 사용하므로, 파일명과 CloudFront의 도메인 주소를 이용하여 URI를 생성합니다. 문서 파일명에 공백등이 있을 수 있으므로 "s3_file_name"은 URL Encoding을 하여야 합니다. 또한, S3 Object의 파일 확장자를 이용하여, Kendra가 사용할 수 있는 문서 타입을 정의합니다. S3를 업로드 할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원며, 문서의 크기는 최대 50MB입니다.  
 
 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
 
