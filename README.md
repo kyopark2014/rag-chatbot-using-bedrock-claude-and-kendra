@@ -18,7 +18,7 @@
 
 ## 주요 구성
 
-Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장들이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ((Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 좋은 답변을 할 수 있습니다. 이와같이 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 관련된 문장으로 선택할 수 있다면,  RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
+Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ((Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 좋은 답변을 할 수 있습니다. 이와같이 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 관련된 문장으로 선택할 수 있다면,  RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
 
 
 ### Kendra 준비
@@ -27,11 +27,11 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
-[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다.
+[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-west-2"으로 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다.
 
 ```python
 modelId = 'anthropic.claude-v2:1’
-bedrock_region = "us-east-1" 
+bedrock_region = "us-west-2" 
 
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
@@ -67,7 +67,7 @@ llm = Bedrock(
 
 ### 채팅이력을 저장하기 위한 메모리 준비 및 Dialog 저장
 
-Lambda에 접속하는 사용자별로 채팅이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 채팅이력을 가진 메모리 맵(map_chain)이 없을 경우에는 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 새로 정의합니다. 기존 채팅이력이 메모리 맵에 있다면 재활용합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
+사용자별로 채팅이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 채팅이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 채팅이력이 없을 경우에는 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용해 아래와 같이 새로 정의합니다. 또한, 기존 채팅이력이 메모리 맵에 있다면 재활용합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
 
 ```python
 map_chain = dict()
@@ -77,7 +77,6 @@ userId  = jsonBody['user_id']
 
 if userId in map_chain:
     memory_chain = map_chain[userId]
-else:
     memory_chain = ConversationBufferWindowMemory(memory_key="chat_history",output_key='answer',return_messages=True,k=5)
     map_chain[userId] = memory_chain
 ```
