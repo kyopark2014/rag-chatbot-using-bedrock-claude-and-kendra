@@ -464,12 +464,13 @@ def get_reference(docs):
 
 설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
 
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/ebda48bd-5d19-4f4d-adec-30622b7054da)
 
-![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df0c08c2-0740-4558-a1d0-9f228f9726bc)
 
 FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
 
-![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/71e96a30-1ecb-4f06-9e8e-d459f204fb21)
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/fce5192f-93de-4ed8-a32e-8ba133d1c392)
+
 
 Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 등록된것을 확인할 수 있습니다.
 
