@@ -23,7 +23,7 @@ const cfnIndex = new kendra.CfnIndex(this, 'MyCfnIndex', {
 
 ### IAM Role
 
-Kendra Role에 Kendra에 대해 아래와 같은 권한을 추가합니다.
+Kendra Role은 아래와 같은 권한을 가져야 합니다.
 
 ```java
 {
@@ -35,7 +35,7 @@ Kendra Role에 Kendra에 대해 아래와 같은 권한을 추가합니다.
 }]
 ```
 
-이를 CDK로 아래와 같이 kendra policy를 생성하여 Lambda의 policy에 추가 합니다
+이를 CDK로 구현하기 위해 아래와 같이 kendra policy를 생성하여 Lambda의 policy에 추가 합니다
 
 ```java
 const region = process.env.CDK_DEFAULT_REGION;
@@ -53,7 +53,7 @@ roleLambdaWebsocket.attachInlinePolicy(
 );
 ```
 
-Kendra를 위한 trust policy는 아래와 같습니다.
+Kendra를 위한 trust statement는 아래와 같습니다.
 
 ```java
 {
@@ -70,7 +70,7 @@ Kendra를 위한 trust policy는 아래와 같습니다.
 }
 ```
 
-따라서, 아래와 같이 "kendra.amazonaws.com"을 추가합니다.
+CDK로 아래와 같이 "kendra.amazonaws.com"을 추가합니다.
 
 ```java
 const roleLambdaWebsocketWebsocket = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
@@ -83,7 +83,7 @@ const roleLambdaWebsocketWebsocket = new iam.Role(this, `role-lambda-chat-for-${
 });
 ```
 
-또한, [Troubleshooting Amazon Kendra Identity and Access](https://docs.aws.amazon.com/kendra/latest/dg/security_iam_troubleshoot.html)와 같이 Kendra는 "iam:PassRole"을 포함하여야 합니다. 
+[Troubleshooting Amazon Kendra Identity and Access](https://docs.aws.amazon.com/kendra/latest/dg/security_iam_troubleshoot.html)와 같이 Kendra는 "iam:PassRole"을 포함하여야 합니다. 
 
 ```java
 {
