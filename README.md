@@ -18,11 +18,7 @@
 
 ## 주요 구성
 
-Kendra는 자연어 검색을 통해 유사한 문서의 발췌문을 제공합니다. 그런데 만약 관련된 단어나 유사한 의미의 문장이 없다면, 가장 관련된 문장을 선택하여 알려주므로 때로는 관계가 없는 문장이 관련된 문장(relevant documents)으로 선택될 수 있습니다. 따라서, Kendra로 검색된 문서에 대한 정확도를 점수(score)로 알 수 있다면, RAG의 정확도를 향상시킬 수 있습니다. 또한, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, 정답에 해당하는 문장을 우선적으로 RAG의 관련된 문서(Relevant Document)로 참조할 수 있어서 정확도를 개선할 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
-
-Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API의 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
-
-
+Kendra는 자연어 검색을 통해 RAG에서 사용되는 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장들을 알려주므로 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택될 수 있습니다. 따라서, Kendra로 검색된 문서에 대한 정확도를 점수(score)로 알 수 있다면, RAG의 정확도를 향상시킬 수 있습니다. 또한, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 놓으면, FAQ의 관련 문장을 우선적으로 참조할 수 있어서 RAG의 정확도를 개선할 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
 
 
 ### Kendra 준비
@@ -230,6 +226,8 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 ### Kendra에서 문서 조회하기
 
 Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 큰 수의 token 숫자를 가지는 발췌문을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 fallback을 수행합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 그밖에 Querry API는 Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)를 지원하고 있습니다. 
+
+Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 검색 결과의 신뢰도를 확인할 수 있습니다. 하지만, Retrieve는 2023년 11월(현재)에 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API의 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
 
 파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, Kendra의 retrieve는 동일한 방식으로 "_language_code"을 설정하여 검색을 수행하여야 합니다. 또한, 아래와 같이 [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
 
