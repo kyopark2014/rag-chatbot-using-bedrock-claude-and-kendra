@@ -31,7 +31,7 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
-[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-west-2"으로 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다.
+[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, 아래와 같이 사용 리전을 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다. Stream 설정 및 WebSocket API 구현과 관련해서는 [Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기](https://aws.amazon.com/ko/blogs/tech/stream-chatbot-for-amazon-bedrock/)을 참조합니다.
 
 ```python
 modelId = 'anthropic.claude-v2:1’
@@ -95,7 +95,9 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### Kendra에 문서 등록하기
 
-RAG의 결과로 참조 문서의 경로(URI)를 제공하면, 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront가 정적 저장소로 S3를 사용하므로, CloudFront의 도메인 주소와 파일명을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어 활용됩니다. 문서 파일명에 공백이 있을 수 있으므로 "s3_file_name"은 URL Encoding을 하여야 합니다. 또한, S3 Object의 파일 확장자를 추출하여, 아래처럼 문서 타입을 정의합니다. Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원하며, 문서의 크기는 최대 50MB입니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
+RAG에 사용한 문서의 경로(URI)를 채팅 UI에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Document)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 아래와 같이 문서 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 합니다. 또한, S3 Object의 파일 확장자를 추출하여, 아래처럼 문서 타입을 정의합니다. 
+
+Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원하며, 문서의 크기는 최대 50MB입니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
 
 ```java
 from urllib import parse
@@ -166,7 +168,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
 
-Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. 이때, Query API의 결과는 질문('QuestionText'), 답변('AnswerText'), URI('_source_uri')에 대한 정보뿐 아니라, [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 같이 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"로 결과의 신뢰도 값을 제공하므로, 'ScoreConfidence'의 범위를 조정하면 좀더 신뢰할만한 관련문서를 얻을 수 있습니다.
+Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. 이때, FAQ에 Query API의 결과는 "QUESTION_ANSWER"으로 내려오는데, 질문(QuestionText), 답변(AnswerText), URI(_source_uri)에 대한 정보뿐 아니라, [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)로 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"와 같은 결과의 신뢰도 값을 얻을 수 있습니다. 이러한 ScoreAttributes의 범위를 조정해서, 관련 문서를 선택적으로 사용할 수 있습니다.
 
 ```java
 {
@@ -216,7 +218,7 @@ Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. �
 }
 ```
 
-상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "VERY_HIGH"와 같은 높은 신뢰도로 "13"을 답변으로 줄 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(relevant doc)로 사용하여야 합니다. 만약 Spokane WA에 있는 모든 clinic의 숫자를 모른다면 모른다는 답변을 할 수 있습니다.
+상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "VERY_HIGH"와 같은 신뢰도로 "13"을 답변으로 줄 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(relevant doc)로 사용하여야 합니다.
 
 
 ### LangChain의 활용
