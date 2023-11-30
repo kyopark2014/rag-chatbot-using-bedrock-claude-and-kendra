@@ -527,7 +527,7 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, `FAQ-Update-for-${projectName}`, {
-      value: 'aws kendra create-faq --index-id ' + kendraIndex + ' --name FAQ_fsi --s3-path \'{\"Bucket\":\"' + s3Bucket.bucketName + '\", \"Key\":\"faq/FAQ_fsi.csv\"}\' --role-arn ' + roleLambdaWebsocket.roleArn + ' --language-code ko --region ' + kendra_region + ' --file-format CSV',
+      value: 'aws kendra create-faq --index-id ' + kendraIndex + ' --name FAQ_banking --s3-path \'{\"Bucket\":\"' + s3Bucket.bucketName + '\", \"Key\":\"faq/faq-banking.csv\"}\' --role-arn ' + roleLambdaWebsocket.roleArn + ' --language-code ko --region ' + kendra_region + ' --file-format CSV',
       description: 'The commend for uploading contents of FAQ',
     });
 
