@@ -31,10 +31,10 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
-[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2을 LLM으로 설정합니다.
+[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, Bedrock은 "us-east-1"으로 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다.
 
 ```python
-modelId = 'anthropic.claude-v2’
+modelId = 'anthropic.claude-v2:1’
 bedrock_region = "us-east-1" 
 
 boto3_bedrock = boto3.client(
@@ -50,7 +50,7 @@ boto3_bedrock = boto3.client(
 HUMAN_PROMPT = "\n\nHuman:"
 AI_PROMPT = "\n\nAssistant:"
 def get_parameter(modelId):
-    if modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+    if modelId == 'anthropic.claude-v2:1':
         return {
             "max_tokens_to_sample":8191, # 8k
             "temperature":0.1,
