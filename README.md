@@ -18,7 +18,7 @@
 
 ## 주요 구성
 
-Kendra는 자연어 검색을 통해 RAG에서 사용되는 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장들이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 따라서, Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 RAG가 FAQ에 있는 문장을 우선적으로 참조할 수 있다면, RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
+Kendra는 자연어 검색을 통해 RAG에서 사용되는 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장들이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 따라서, Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, 자주 사용하는 질문과 답변을 Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)로 등록하여 RAG가 FAQ에 있는 문장을 우선적으로 참조할 수 있다면, RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
 
 
 ### Kendra 준비
