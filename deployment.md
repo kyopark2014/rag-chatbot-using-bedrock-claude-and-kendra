@@ -2,7 +2,7 @@
 
 ## Bedrock 사용 권한 설정하기
 
-본 실습에서는 Bedrock은 us-west-2 (Oregon) 리전을 사용합니다. [Model access](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/modelaccess)에 접속해서 [Edit]를 선택하여 모든 모델을 사용할 수 있도록 설정합니다. 
+본 실습에서는 Bedrock은 us-west-2 (Oregon) 리전을 사용합니다. [Model access](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/modelaccess)에 접속해서 [Edit]를 선택하여 모든 모델을 사용할 수 있도록 설정합니다. 또한, 기본 인프라(Lambda, API Gateway, S3)와 Kendra는 ap-northeast-1 (Tokyo)리전을 사용합니다.
 
 ![image](https://github.com/kyopark2014/question-answering-chatbot-with-vector-store/assets/52392004/112fa4f6-680b-4cbf-8018-3bef6514ccf3)
 
@@ -13,11 +13,11 @@
 
 여기서는 [Cloud9](https://aws.amazon.com/ko/cloud9/)에서 [AWS CDK](https://aws.amazon.com/ko/cdk/)를 이용하여 인프라를 설치합니다.
 
-1) [Cloud9 Console](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/create)에 접속하여 [Create environment]-[Name]에서 “chatbot”으로 이름을 입력하고, EC2 instance는 “m5.large”를 선택합니다. 나머지는 기본값을 유지하고, 하단으로 스크롤하여 [Create]를 선택합니다.
+1) [Cloud9 Console](https://ap-northeast-1.console.aws.amazon.com/cloud9control/home?region=ap-northeast-1#/create)에 접속하여 [Create environment]-[Name]에서 “chatbot”으로 이름을 입력하고, EC2 instance는 “m5.large”를 선택합니다. 나머지는 기본값을 유지하고, 하단으로 스크롤하여 [Create]를 선택합니다.
 
 ![noname](https://github.com/kyopark2014/chatbot-based-on-Falcon-FM/assets/52392004/7c20d80c-52fc-4d18-b673-bd85e2660850)
 
-2) [Environment](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/)에서 “chatbot”를 [Open]한 후에 아래와 같이 터미널을 실행합니다.
+2) [Environment](https://ap-northeast-1.console.aws.amazon.com/cloud9control/home?region=ap-northeast-1#/)에서 “chatbot”를 [Open]한 후에 아래와 같이 터미널을 실행합니다.
 
 ![noname](https://github.com/kyopark2014/chatbot-based-on-Falcon-FM/assets/52392004/b7d0c3c0-3e94-4126-b28d-d269d2635239)
 
@@ -58,7 +58,7 @@ aws sts get-caller-identity --query Account --output text
 아래와 같이 bootstrap을 수행합니다. 여기서 "account-id"는 상기 명령어로 확인한 12자리의 Account ID입니다. bootstrap 1회만 수행하면 되므로, 기존에 cdk를 사용하고 있었다면 bootstrap은 건너뛰어도 됩니다.
 
 ```java
-cdk bootstrap aws://account-id/ap-northeast-2
+cdk bootstrap aws://account-id/ap-northeast-1
 ```
 
 8) 인프라를 설치합니다.
@@ -67,25 +67,19 @@ cdk bootstrap aws://account-id/ap-northeast-2
 cdk deploy --all
 ```
 
-9) HTMl 파일을 S3에 복사합니다.
-
-아래와 같이 Output의 HtmlUpdateCommend을 붙여넣기 합니다. 아래 경우에 "aws s3 cp ../html/ s3://storage-for-korean-chatbot-ap-northeast-2/html --recursive"입니다.
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/624e7ed5-b5e2-4b6b-b584-27f7189cfa7e)
-
-이때의 결과는 아래와 같습니다.
-
-![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/6d73b377-8cca-4910-9cbd-4aaf1351be2a)
-
-  
-
-9) 설치가 완료되면 브라우저에서 아래와 같이 WebUrl를 확인하여 브라우저를 이용하여 접속합니다.
-
 설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
 
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/ebda48bd-5d19-4f4d-adec-30622b7054da)
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/aaf5c20b-2b77-4a4f-afc1-bf5fa5d1b99f)
 
 
-FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
+9) HTMl 파일을 S3에 복사합니다.
+
+아래와 같이 Output의 HtmlUpdateCommend을 붙여넣기 합니다.
+
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/3428efb9-a41c-45cf-96de-c3bd0f7b740a)
+
+
+10) FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/fce5192f-93de-4ed8-a32e-8ba133d1c392)
 
@@ -94,4 +88,8 @@ Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 �
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
 
-이후 Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다.
+
+11) Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다. 첫번째 메시지 발송시에 “재접속중입니다”로 나오면 웹페이지를 새로고침 합니다.
+
+
+
