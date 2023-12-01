@@ -486,10 +486,33 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다.
 
+## 리소스 정리하기 
+
+더이상 인프라를 사용하지 않는 경우에 아래처럼 모든 리소스를 삭제할 수 있습니다. 
+
+1) [API Gateway Console](https://ap-northeast-1.console.aws.amazon.com/apigateway/main/apis?region=ap-northeast-1)로 접속하여 "rest-api-for-stream-chatbot", "ws-api-for-stream-chatbot"을 삭제합니다.
+
+2) [Cloud9 console](https://ap-northeast-1.console.aws.amazon.com/cloud9control/home?region=ap-northeast-1#/)에 접속하여 아래의 명령어로 전체 삭제를 합니다.
+
+
+```text
+cdk destroy --all
+```
+
+
 ## 결론
 
 Amazon Bedrock의 Claude LLM을 이용하여, RAG가 적용된 한국어 Chatbot을 만들었습니다. Kendra에서 관련된 문서를 조회할 때에 검색의 정확도를 고려하여 관련성이 높은 문서들을 선택하였고, FAQ(Frequently Asking Questions)을 활용하여 검색의 정확도를 높이는 방식으로 RAG의 성능을 개선하였습니다. 또한, 새로운 기능 개발이나 기존 소스의 재활용을 위해 오픈된 개발환경인 LangChain을 활용하여 LLM과 어플리케이션의 인터페이스를 구성하였습니다. 서버리스 서비스들을 활용하여 전체적인 Architecture를 구성하였으므로, 유지보수에 대한 부담을 줄이고 빠른 개발 및 상용화가 가능합니다. 이와 같이 Amazon Bedrock을 활용하면 200k token context window를 가지면서 높은 한국어 성능을 보이는 Claude v2.1을 편리하게 이용할 수 있으며, Kendra로 쉽게 RAG를 구성하여 기업의 데이터를 안전하고 편리하게 사용할 수 있습니다.
 
+
+## 실습 코드 및 도움이 되는 참조 블로그
+
+아래의 링크에서 실습 소스 파일 및 기계 학습(ML)과 관련된 자료를 확인하실 수 있습니다.
+
+- [Amazon SageMaker JumpStart를 이용하여 Falcon Foundation Model기반의 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/chatbot-based-on-falcon-fm/)
+- [Amazon SageMaker JumpStart와 Vector Store를 이용하여 Llama 2로 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/sagemaker-jumpstart-vector-store-llama2-chatbot/)
+- [VARCO LLM과 Amazon OpenSearch를 이용하여 한국어 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/korean-chatbot-using-varco-llm-and-opensearch/)
+- [Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기](https://aws.amazon.com/ko/blogs/tech/stream-chatbot-for-amazon-bedrock/)
 
 ## Reference 
 
