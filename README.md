@@ -175,7 +175,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 [FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 이때 [index당 등록할 수 있는 FAQ의 수](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-522F5A9C)는 기본이 30개이고 Quota는 조정이 가능합니다. 아래 그림은 FAQ의 한 예입니다. 만약 "How many free clinics are in Spokane WA?"와 같은 질문을 하면 답변으로 "13"을 얻을 수 있습니다.
 
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
+![noname](./images/faq_demo.png)
 
 Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. 이때, FAQ에 Query API의 결과는 "QUESTION_ANSWER"으로 내려오는데, 질문(QuestionText), 답변(AnswerText), URI(_source_uri)에 대한 정보뿐 아니라, [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)로 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"와 같은 결과의 신뢰도 값을 얻을 수 있습니다. 이러한 ScoreAttributes의 범위를 조정해서, 관련 문서를 선택적으로 사용할 수 있습니다.
 
