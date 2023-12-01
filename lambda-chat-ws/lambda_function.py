@@ -67,7 +67,7 @@ boto3_bedrock = boto3.client(
 HUMAN_PROMPT = "\n\nHuman:"
 AI_PROMPT = "\n\nAssistant:"
 def get_parameter(modelId):
-    if modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+    if modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2' or modelId == 'anthropic.claude-v2:1':
         return {
             "max_tokens_to_sample":8191, # 8k
             "temperature":0.1,

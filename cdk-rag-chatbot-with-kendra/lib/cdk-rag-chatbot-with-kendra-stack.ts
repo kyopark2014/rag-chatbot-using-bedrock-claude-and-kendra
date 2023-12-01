@@ -17,7 +17,7 @@ const region = process.env.CDK_DEFAULT_REGION;
 const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
-const model_id = "anthropic.claude-v2";
+const model_id = "anthropic.claude-v2:1'";
 const projectName = `rag-chatbot-with-kendra`;
 
 const bucketName = `storage-for-${projectName}-${region}`;
