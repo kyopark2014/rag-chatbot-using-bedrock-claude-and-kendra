@@ -32,7 +32,7 @@ Kendra Role은 아래와 같은 권한을 가져야 합니다.
         "kendra:*"
     ],
     "Resource": "arn:aws:kendra:[your-region]:[your-account-id]:index/[index-id]"
-}]
+}
 ```
 
 이를 CDK로 구현하기 위해 아래와 같이 kendra policy를 생성하여 Lambda의 policy에 추가 합니다
