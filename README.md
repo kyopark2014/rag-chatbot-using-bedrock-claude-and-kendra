@@ -19,7 +19,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 6) lambda(chat)은 대화이력과 현재의 질문을 가지고 대화에 맞는 적절한 새로운 질문을 Bedrock을 통해 생성합니다.
 7) lambda(chat)은 새로운 질문으로 Kendra로 부터 관련된 문장(Relevant Documents)가 있는지 확인합니다.
 8) Kendra로 부터 얻은 관련된 문장과 새로운 질문으로 Bedrock에게 답변을 요청합니다.
-9) Bedrock으로 부터 답변(Answer)을 얻으면 새로운 대화를 DyanmoDB에 저장하고, 사용자에게 답변을 전달합니다. 
+9) Bedrock으로 부터 답변(Answer)을 얻으면 DyanmoDB의 대화이력을 업데이트하고, 사용자에게 답변을 전달합니다. 
 
 아래에서는 상기의 동작을 Sequence Diagram으로 상세하게 설명하였습니다.
 
