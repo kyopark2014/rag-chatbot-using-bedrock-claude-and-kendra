@@ -97,7 +97,7 @@ const roleLambdaWebsocketWebsocket = new iam.Role(this, `role-lambda-chat-for-${
 }
 ```
 
-이를 [cdk-chatbot-with-kendra-stack.ts](../cdk-chatbot-with-kendra-stack.ts)에서는 아래와 같이 구현할 수 있습니다.
+이를 [cdk-chatbot-with-kendra-stack.ts](./cdk-rag-chatbot-with-kendra/lib/cdk-rag-chatbot-with-kendra-stack.ts)에서는 아래와 같이 구현할 수 있습니다.
 
 ```java
 const passRoleResourceArn = roleLambdaWebsocketWebsocket.roleArn;
