@@ -1,6 +1,6 @@
 # CDK로 인프라 구현하기
 
-S3를 생성합니다.
+파일 업로드 및 CloudFront의 정적 보관소를 위해 S3 Bucket을 생성합니다.
 
 ```typescript
 const s3Bucket = new s3.Bucket(this, `storage-${projectName}`, {
@@ -21,20 +21,6 @@ const s3Bucket = new s3.Bucket(this, `storage-${projectName}`, {
         },
     ],
 });
-if (debug) {
-    new cdk.CfnOutput(this, 'bucketName', {
-        value: s3Bucket.bucketName,
-        description: 'The nmae of bucket',
-    });
-    new cdk.CfnOutput(this, 's3Arn', {
-        value: s3Bucket.bucketArn,
-        description: 'The arn of s3',
-    });
-    new cdk.CfnOutput(this, 's3Path', {
-        value: 's3://' + s3Bucket.bucketName,
-        description: 'The path of s3',
-    });
-}
 ```
 
 FAQ sample을 S3에 복사합니다. Webpage는 S3의 루트에 저장되어야 하므로 아래처럼 복사합니다.
