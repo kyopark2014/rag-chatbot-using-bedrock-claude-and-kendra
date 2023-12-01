@@ -33,8 +33,8 @@ s3_bucket = os.environ.get('s3_bucket') # bucket name
 s3_prefix = os.environ.get('s3_prefix')
 callLogTableName = os.environ.get('callLogTableName')
 bedrock_region = os.environ.get('bedrock_region', 'us-west-2')
-kendra_region = os.environ.get('kendra_region', 'us-west-2')
-modelId = os.environ.get('model_id', 'anthropic.claude-v2')
+kendra_region = os.environ.get('kendra_region', 'ap-northeast-1')
+modelId = os.environ.get('model_id', 'anthropic.claude-v2:1')
 print('model_id: ', modelId)
 isDebugging = False
 rag_type = os.environ.get('rag_type', 'kendra')
@@ -537,7 +537,7 @@ def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
                 if attribute["Key"] == "QuestionText":
                     question_text = str(attribute["Value"]["TextWithHighlightsValue"]["Text"])
             answer = query_result["DocumentExcerpt"]["Text"]
-            excerpt = f"Question: {question_text} \nAnswer: {answer}"
+            excerpt = f"{question_text} {answer}"
             excerpt = excerpt.replace("\n"," ") 
         else: 
             excerpt = query_result["DocumentExcerpt"]["Text"]
