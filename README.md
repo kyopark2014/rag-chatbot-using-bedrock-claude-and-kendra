@@ -2,22 +2,26 @@
 
 [Amazon Bedrock의 Claude LLM v2.1](https://aws.amazon.com/ko/about-aws/whats-new/2023/11/claude-2-1-foundation-model-anthropic-amazon-bedrock/)은 200k token을 가지는 Context Window를 제공하고, 환각(Hallucination) 방지에서도 높은 성능을 보여주고 있습니다. 또한, [Amazon Q](https://aws.amazon.com/ko/blogs/aws/introducing-amazon-q-a-new-generative-ai-powered-assistant-preview/)에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)과 [Amazon Kendra](https://aws.amazon.com/ko/kendra/)을 이용하여 다양한 데이터 소스를 통합하여 업무를 간소화하고, 빠른 의사결정 및 문제점 해결이 가능하도록, 즉각적이고 관련성 있는 정보와 조언을 제공하고 있습니다. 본 게시글에서는 Amazon Bedrock의 Claude LLM과 Amazon Kendra를 사용하여 RAG가 적용된 한국어 Chatbot을 만드는 것을 설명합니다. LLM과 어플리케이션의 인터페이스는 [LangChain](https://www.langchain.com/)을 이용하며, Kendra에서 제공하는 정보를 최대한 활용하여 [RAG (Retrieval Augmented Generation)](https://docs.aws.amazon.com/ko_kr/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html)의 성능을 향상시킵니다. 이를 통해, 오픈된 개발환경에서, 기업의 데이터를 안전하고 효율적으로 사용하는 한국어 Chatbot을 만들수 있습니다. 
 
-Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(Relevant Documents)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ(Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 정확한 답변을 할 수 있습니다. 이와같이 본 게시글에서는 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 RAG가 사용할 문장들을 선택하고, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 활용하여, RAG의 정확도를 향상시키는 방법을 설명합니다. 
+Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Relevant Documents)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ(Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 정확한 답변을 할 수 있습니다. 이와같이 본 게시글에서는 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 RAG가 사용할 문장들을 선택하고, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 활용하여, RAG의 정확도를 향상시키는 방법을 설명합니다. 
 
-아래 그림은 전체적인 Arhcitecture를 보여주고 있습니다. 사용자는 [Amazon CloudFront](https://aws.amazon.com/ko/cloudfront/)을 통해 Web을 통해 채팅화면에 접속합니다. Client는 [Amazon API Gateway](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/welcome.html)와 [Amazon Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)를 통해 [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)에 저장된 채팅이력을 가져와서 화면에 보여줄 수 있습니다. 사용자가 메시지를 입력하면 Web Socket을 처리하는 API Gateway를 통해 stream 방식으로 Chatbot과 대화를 할 수 있습니다. Lambda(chat)은 대화이력을 이용해 Assistant와 상호작용(interaction)을 할수 있도록 하며, Kendra에서 질문과 관련된 문장(Relevant Documents)를 가져와서 RAG 동작을 수행합니다. 
+아래 그림은 전체적인 Arhcitecture를 보여주고 있습니다. 사용자는 [Amazon CloudFront](https://aws.amazon.com/ko/cloudfront/)을 통해 Web을 통해 채팅화면에 접속합니다. Client는 [Amazon API Gateway](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/welcome.html)와 [Amazon Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)를 통해 [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)에 저장된 대화이력을 가져와서 화면에 보여줄 수 있습니다. 사용자가 메시지를 입력하면 Web Socket을 처리하는 API Gateway를 통해 stream 방식으로 Chatbot과 대화를 할 수 있습니다. Lambda(chat)은 대화이력을 이용해 Assistant와 상호작용(interaction)을 할수 있도록 하며, Kendra에서 질문과 관련된 문장(Relevant Documents)를 가져와서 RAG 동작을 수행합니다. 
 
 
 <img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
 
 
 채팅 창에서 텍스트 입력(Prompt)를 통해 Kendra로 RAG를 활용하는 과정은 아래와 같습니다.
-1) 사용자가 채팅창에서 질문(Question)을 입력합니다.
-2) 이것은 Chat API를 이용하여 [lambda (chat)](./lambda-chat/index.js)에 전달됩니다.
-3) lambda(chat)은 Kendra에 질문과 관련된 문장이 있는지 확인합니다.
-4) Kendra로 부터 얻은 관련된 문장들로 prompt template를 생성하여 대용량 언어 모델(LLM) Endpoint로 질문을 전달합니다. 이후 답변을 받으면 사용자에게 결과를 전달합니다.
-5) 결과는 DyanmoDB에 저장되어 이후 데이터 분석등의 목적을 위해 활용됩니다.
+1) 사용자가 CloudFront의 Domain으로 접속합니다.
+2) 사용자가 로그인을 화면 이전 대화이력을 가져와서 화면에 보여줍니다.
+3) 채팅창에서 질문(Question)을 입력합니다.
+4) 질문은 Web Socket 방식으로 API Gateway을 통해 [lambda (chat)](./lambda-chat/index.js)에 전달됩니다.
+5) lambda(chat)은 사용자의 이전 대화이력이 있는지 확인하여 없다면, DynamoDB에서 로드하여 활용합니다.
+6) lambda(chat)은 대화이력과 현재의 질문을 가지고 대화에 맞는 적절한 새로운 질문을 Bedrock을 통해 생성합니다.
+7) lambda(chat)은 새로운 질문으로 Kendra로 부터 관련된 문장(Relevant Documents)가 있는지 확인합니다.
+8) Kendra로 부터 얻은 관련된 문장과 새로운 질문으로 Bedrock에게 답변을 요청합니다.
+9) Bedrock으로 부터 답변(Answer)을 얻으면 새로운 대화를 DyanmoDB에 저장하고, 사용자에게 답변을 전달합니다. 
 
-아래는 kendra를 이용한 메시지 동작을 설명하는 sequence diagram입니다. 
+아래에서는 상기의 동작을 Sequence Diagram으로 상세하게 설명하였습니다.
 
 <img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5ec32908-823b-47ea-baef-fbfba2ef240b" width="1000">
 
@@ -72,9 +76,9 @@ llm = Bedrock(
 AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
 
 
-### 채팅이력을 저장하기 위한 메모리 준비 및 Dialog 저장
+### 대화이력을 저장하기 위한 메모리 준비 및 Dialog 저장
 
-사용자별로 채팅이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 채팅이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 채팅이력이 메모리 맵에 있다면 재활용하고, 없다면 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용하여 새로 정의합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
+사용자별로 대화이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 대화이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 대화이력이 메모리 맵에 있다면 재활용하고, 없다면 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용하여 새로 정의합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
 
 ```python
 map_chain = dict()
@@ -322,7 +326,7 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
-### 채팅이력을 이용하여 새로운 질문 생성하기
+### 대화이력을 이용하여 새로운 질문 생성하기
 
 채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 chat_history로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
 
