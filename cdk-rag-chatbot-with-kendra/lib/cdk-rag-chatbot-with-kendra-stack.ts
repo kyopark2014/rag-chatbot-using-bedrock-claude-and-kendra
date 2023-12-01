@@ -17,11 +17,11 @@ const region = process.env.CDK_DEFAULT_REGION;
 const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
-const model_id = "anthropic.claude-v2:1'";
+const model_id = "anthropic.claude-v2:1";
 const projectName = `rag-chatbot-with-kendra`;
 
 const bucketName = `storage-for-${projectName}-${region}`;
-const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
+const bedrock_region = "us-west-2";  // "us-east-1" "us-west-2" 
 const kendra_region = "ap-northeast-1";
 
 const rag_type = 'kendra';  // faiss, opensearch, kendra
