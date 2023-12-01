@@ -231,7 +231,7 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 
 ### Kendra에서 문서 조회하기
 
-Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 많은 발췌문(excerpt)을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 fallback을 수행합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 그밖에 Querry API는 Kendra 검색 성능을 개선하기 위해 사용하는 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)를 지원하고 있습니다. 
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 많은 발췌문(excerpt)을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)을 수행합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 
 
 Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)로 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"와 같은 검색 결과의 신뢰도를 제공합니다. 하지만, Retrieve는 2023년 12월(현재)까지는 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API의 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
 
@@ -256,9 +256,6 @@ query_id = resp["QueryId"]
 if len(resp["ResultItems"]) >= 1:
     retrieve_docs = []
     for query_result in resp["ResultItems"]:
-        confidence = query_result["ScoreAttributes"]['ScoreConfidence']
-    
-    if confidence == 'VERY_HIGH' or confidence == 'HIGH':
         retrieve_docs.append(extract_relevant_doc_for_kendra(query_id = query_id, apiType = "retrieve", query_result = query_result))
 
 def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
@@ -293,7 +290,7 @@ return doc_info
 ```
 
 
-[Kendra의 query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 relevant document로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 relevant docs로 활용하고 있습니다. 
+[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(relevant document)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 relevant docs로 활용하고 있습니다. 
 
 ```python
 resp = kendra_client.query(
@@ -324,7 +321,7 @@ if len(resp["ResultItems"]) >= 1:
 
 ### 채팅이력을 이용하여 새로운 질문 생성하기
 
-채팅화면에서 대화에서 Q&A를 수행하려면, 이전 채팅 이력과 현재의 질문을 이용하여 새로운 질문을 생성하여야 합니다. 여기서는 질문이 한글/영어 인지를 확인하여 다른 Prompt를 이용하여 새로운 질문(revised_question)을 생성합니다. 
+채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 <history></history>안의 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
 
 ```python
 def get_revised_question(connectionId, requestId, query):        
@@ -397,7 +394,7 @@ def get_prompt_template(query, convType):
 
         Assistant:"""
                 
-    else:  # English
+    else:  
         prompt_template = """\n\nHuman: Here is pieces of context, contained in <context> tags. Provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
             
         <context>
