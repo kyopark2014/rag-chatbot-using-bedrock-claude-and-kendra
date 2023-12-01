@@ -31,7 +31,7 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
-[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, 아래와 같이 사용 리전을 설정하고, Antrhopic의 Claude V2.1을 LLM으로 설정합니다. Stream 설정 및 WebSocket API 구현과 관련해서는 [Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기](https://aws.amazon.com/ko/blogs/tech/stream-chatbot-for-amazon-bedrock/)을 참조합니다.
+[lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, 아래와 같이 사용 리전을 설정하고, Anthropic의 Claude V2.1을 LLM으로 설정합니다. Stream 설정 및 WebSocket API 구현과 관련해서는 [Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기](https://aws.amazon.com/ko/blogs/tech/stream-chatbot-for-amazon-bedrock/)을 참조합니다.
 
 ```python
 modelId = 'anthropic.claude-v2:1’
@@ -71,7 +71,7 @@ llm = Bedrock(
 
 ### 채팅이력을 저장하기 위한 메모리 준비 및 Dialog 저장
 
-사용자별로 채팅이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 채팅이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 채팅이력이 메모리 맵에 있다면 재활용하고, 없다면 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용하여 새로 정의합니다. 또한,  상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
+사용자별로 채팅이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 채팅이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 채팅이력이 메모리 맵에 있다면 재활용하고, 없다면 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용하여 새로 정의합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
 
 ```python
 map_chain = dict()
@@ -86,7 +86,7 @@ else
     map_chain[userId] = memory_chain
 ```
 
-LLM으로 답변을 얻으면, 아래와 같이 memory_chain에 새로운 dialog로서 질문과 답변을 저장할 수 있습니다.
+LLM으로 부터 질문에 대한 답변을 얻으면, 아래와 같이 memory_chain에 새로운 dialog로 저장합니다.
 
 ```python
 memory_chain.chat_memory.add_user_message(text)
@@ -95,7 +95,7 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### Kendra에 문서 등록하기
 
-RAG에 사용한 문서의 경로(URI)를 채팅 UI에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Document)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 아래와 같이 문서 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 합니다. 또한, S3 Object의 파일 확장자를 추출하여, 아래처럼 문서 타입을 정의합니다. 
+RAG에 사용한 문서의 경로(URI)를 채팅화면에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Document)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 아래와 같이 문서 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 합니다. 또한, S3 Object의 파일 확장자를 추출하여, 아래처럼 문서 타입을 정의합니다. 
 
 Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원하며, 문서의 크기는 최대 50MB입니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
 
@@ -164,7 +164,7 @@ def store_document_for_kendra(path, s3_file_name, requestId):
 
 ### FAQ 활용하기
 
-[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 이때 [index당 등록할 수 있는 FAQ의 수](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-522F5A9C)는 기본이 30개이고 Quota는 조정이 가능합니다. 아래 그림은 FAQ의 한 예입니다. 만약 "How many free clinics are in Spokane WA?"와 같은 질문을 하면 답변으로 "13"만을 얻을 수 있습니다.
+[FAQ-Kendra](https://github.com/aws-samples/enterprise-search-with-amazon-kendra-workshop/blob/master/Part%202%20-%20Adding%20a%20FAQ.md)와 같이 Kendra Console에서 FAQ를 등록할 수 있습니다. 이때 [index당 등록할 수 있는 FAQ의 수](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-522F5A9C)는 기본이 30개이고 Quota는 조정이 가능합니다. 아래 그림은 FAQ의 한 예입니다. 만약 "How many free clinics are in Spokane WA?"와 같은 질문을 하면 답변으로 "13"을 얻을 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/e271ba1e-3b7c-4f44-bf9f-b07bdaf89a34)
 
@@ -218,12 +218,12 @@ Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. �
 }
 ```
 
-상기의 FAQ 예제에서는 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra라에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "VERY_HIGH"와 같은 신뢰도로 "13"을 답변으로 줄 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA? Answer: 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(relevant doc)로 사용하여야 합니다.
+상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "Question: How many free clinics are in Spokane WA?\nAnswer: 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Document)로 사용하여야 합니다.
 
 
 ### LangChain의 활용
 
-LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와 [ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)은 [kendra retriever](https://api.python.langchain.com/en/latest/retrievers/langchain.retrievers.kendra.AmazonKendraRetriever.html)를 이용하여 편리하게 RAG를 사용할 수 있도록 도와줍니다. 만약, RetrievalQA나 ConversationalRetrievalChain을 사용하기를 원할 경우에는 아래와 같이 [cdk-rag-chatbot-with-kendra-stack.ts](./cdk-rag-chatbot-with-kendra-stack.ts)에서 rag_method를 변경하여 사용할 수 있습니다. rag_method을 RetrievalPrompt로 설정하면, kendra retriever를 직접 구현하게 되는데, Kendra의 FAQ와 ScoreAttributes를 추가로 활용하여 RAG의 정확도를 높일 수 있습니다. 이때에는 [Kendra API를 boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)로 직접 조회하고, [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 RAG을 구현하게 됩니다. 
+LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와 [ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)은 [kendra retriever](https://api.python.langchain.com/en/latest/retrievers/langchain.retrievers.kendra.AmazonKendraRetriever.html)를 이용하여 편리하게 RAG를 사용할 수 있도록 도와줍니다. 만약, RetrievalQA나 ConversationalRetrievalChain을 사용하기를 원할 경우에는 아래와 같이 [cdk-rag-chatbot-with-kendra-stack.ts](./cdk-rag-chatbot-with-kendra-stack.ts)에서 rag_method를 변경하여 사용할 수 있습니다. 반면에 rag_method을 RetrievalPrompt로 설정하면, kendra retriever를 직접 구현하게 되는데, Kendra의 FAQ와 ScoreAttributes를 추가로 활용하여 RAG의 정확도를 높일 수 있습니다. 이때에는 [Kendra API를 boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)로 직접 조회하고, [Prompt](https://api.python.langchain.com/en/latest/api_reference.html?highlight=prompt#module-langchain.prompts)를 이용해 RAG을 구현하게 됩니다. 
 
 ```typescript
 const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
@@ -231,9 +231,9 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 
 ### Kendra에서 문서 조회하기
 
-Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 많은 발췌문(excerpt)을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 [feedback](https://docs.aws.amazon.com/kendra/latest/dg/submitting-feedback.html)을 수행합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 
+Kendra에서 검색할때에 사용하는 API에는 [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)와 [Query](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)가 있습니다. Retrieve API는 Query API 보다 더 많은 발췌문(excerpt)을 제공하므로 일반적으로 더 나은 결과를 얻습니다. LangChain의 [AmazonKendraRetriever](https://api.python.langchain.com/en/latest/_modules/langchain/retrievers/kendra.html#AmazonKendraRetriever)은 먼저 Retrieve API를 사용한 후에 결과가 없으면 Query API로 재시도합니다. [Retrieve](https://docs.aws.amazon.com/kendra/latest/APIReference/API_Retrieve.html)는 Default Quota 기준으로 하나의 발췌문은 200개의 token으로 된 단어(word)들로 구성될 수 있고, 기본 10개 / 최대 100개(PageSize)까지 의미적으로 관련된 발췌문을 얻을 수 있습니다. 또한, QueryText는 [Kendra의 "Characters in query text"](https://us-west-2.console.aws.amazon.com/servicequotas/home/services/kendra/quotas/L-7107C1BC) Quota(기본 1000자)만큼 입력할수 있지만, Kendra는 30개의 주요한 token 단어로 잘라서 사용합니다. 
 
-Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)로 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"와 같은 검색 결과의 신뢰도를 제공합니다. 하지만, Retrieve는 2023년 12월(현재)까지는 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API의 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
+Kendra의 Retrieve와 Query API는 [ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)로 "VERY_HIGH", "HIGH", "MEDIUM", "LOW", "NOT_AVAILABLE"와 같은 검색 결과의 신뢰도를 제공합니다. 하지만, Retrieve는 2023년 12월(현재)까지는 영어(en)에 대해서만 score를 제공하고 있으므로, 본 게시글의 실습에서는 Query API만 ScoreAttribute를 활용하여 검색의 범위를 조정합니다.
 
 파일을 Kendra에 넣을때에 "_language_code"을 "ko"로 설정하였으므로, Kendra의 retrieve는 동일한 방식으로 "_language_code"을 설정하여 검색을 수행하여야 합니다. 또한, 아래와 같이 [Document Attribute](https://docs.aws.amazon.com/kendra/latest/dg/hiw-document-attributes.html)에 따라 "_source_uri", "_excerpt_page_number" 등을 설정합니다. 
 
@@ -290,7 +290,7 @@ return doc_info
 ```
 
 
-[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(relevant document)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 relevant docs로 활용하고 있습니다. 
+[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(relevant document)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 관련 문서(relevant docs)로 활용하고 있습니다. 
 
 ```python
 resp = kendra_client.query(
@@ -321,7 +321,7 @@ if len(resp["ResultItems"]) >= 1:
 
 ### 채팅이력을 이용하여 새로운 질문 생성하기
 
-채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 <history></history>안의 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
+채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 historyf로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
 
 ```python
 def get_revised_question(connectionId, requestId, query):        
@@ -409,7 +409,7 @@ def get_prompt_template(query, convType):
 return PromptTemplate.from_template(prompt_template)
 ```
 
-Prompt를 이용하여 관련된 문서를 context로 제공하고 새로운 질문(revised_question)을 전달한 후에 응답을 확인합니다. 관련된 문서(relevant_docs)에서 "title", "_excerpt_page_number", "source"를 추출하여 reference로 추가합니다. 이때 FAQ의 경우는 source uri를 제공할 수 없으므로 아래와 같이 alert으로 FAQ의 quetion/answer 정보를 화면에 보여줍니다. 
+Prompt를 이용하여 관련된 문서를 context로 제공하고 새로운 질문(revised_question)을 전달한 후에 응답을 확인합니다. 관련된 문서(relevant_docs)에서 "title", "_excerpt_page_number", "source"를 추출하여 reference로 추가합니다. 이때 FAQ의 경우는 문서 원본을 URI로 제공할 수 없으므로 아래와 같이 alert으로 FAQ의 quetion/answer 정보를 화면에 보여줍니다. 
 
 ```python
 try: 
@@ -461,9 +461,7 @@ def get_reference(docs):
 - [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)에 따라 계정을 준비합니다.
 
 ### CDK를 이용한 인프라 설치
-[인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다.
-
-설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
+[인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다. 설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/ebda48bd-5d19-4f4d-adec-30622b7054da)
 
