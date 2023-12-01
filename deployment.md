@@ -77,19 +77,19 @@ cdk deploy --all
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/75e4f2af-5fe1-4dd7-b3d4-29e954f1dc50)
 
 
-10) HTMl 파일을 S3에 복사합니다.
+10) HTML 파일을 S3에 복사합니다.
 
-아래와 같이 Output의 HtmlUpdateCommend을 붙여넣기 합니다.
+아래와 같이 Output의 HtmlUpdateCommend을 터미널에 붙여넣기해서 필요한 파일을 S3로 업로드합니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/3428efb9-a41c-45cf-96de-c3bd0f7b740a)
 
 
-11) FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
+11) FAQ를 생성하기 위하여 아래와 같이 Output의 FAQUpdateforkoreanchatbot를 복사해서 터미널에 붙여넣기 합니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/fce5192f-93de-4ed8-a32e-8ba133d1c392)
 
 
-Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 등록된것을 확인할 수 있습니다.
+Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_banking"로 Sample FAQ가 등록된것을 확인할 수 있습니다.
 
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
 
