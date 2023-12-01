@@ -7,7 +7,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 아래 그림은 전체적인 Arhcitecture를 보여주고 있습니다. 사용자는 [Amazon CloudFront](https://aws.amazon.com/ko/cloudfront/)을 통해 채팅화면에 접속합니다. Client는 [Amazon API Gateway](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/welcome.html)와 [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)를 통해 [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)에 저장된 대화이력을 가져와서 화면에 보여줄 수 있습니다. 사용자가 메시지를 입력하면 Web Socket을 처리하는 API Gateway를 통해 stream 방식으로 Chatbot과 대화를 할 수 있습니다. Lambda(chat)은 대화이력을 이용해 Assistant와 상호작용(interaction)을 할 수 있도록 하며, Kendra에서 질문과 관련된 문장(Relevant Documents)를 가져와서 RAG 동작을 수행합니다. 
 
 
-<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
+<img src="./image/basic_architecture.png" width="800">
 
 
 채팅 창에서 텍스트 입력(Prompt)를 통해 Kendra로 RAG를 활용하는 과정은 아래와 같습니다.
