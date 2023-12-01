@@ -468,19 +468,19 @@ def get_reference(docs):
 ## 실행결과
 
 
-[fsi_faq_ko.csv](https://github.com/kyopark2014/question-answering-chatbot-with-vector-store/blob/main/fsi_faq_ko.csv)을 다운로드 하고, 채팅창의 파일 아이콘을 선택하여 업로드합니다. 
-
-
-FAQ에 있는 "금융인증서 해외에서 발급할 수 있나요?"은 질문을 하면 아래처럼 먼저 FAQ의 결과를 반영할 수 있었습니다.
+채팅장에서 "금융인증서 해외에서 발급할 수 있나요?"은 질문을 하면, [FAQ-banking](./contents/faq/faq-banking.csv)의 내용으로 아래와 같은 답변을 얻을 수 있습니다. 
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/df7a8e77-23d6-4419-87de-38780da58128)
 
-[보일러 에러코드](./contents/error_code.pdf) 파일을 다운로드 한 후에, 업로드합니다. 이후 "우리집 보일러가 고장났나봐요. A491이라는 에러가 나오는데 어떻게 해야할까요?"라고 입력한 후에 결과를 확인합니다.
+[보일러 에러코드 (pdf)](./contents/error_code.pdf) 파일을 다운로드 한 후에, 업로드합니다. 이후 채팅창에 "우리집 보일러가 고장났나봐요. A491이라는 에러가 나오는데 어떻게 해야할까요?"라고 입력한 후에 결과를 확인합니다.
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/a204e83f-94be-44a8-89f8-9fa7d5c269bf)
 
-
 대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다.
+
+## 결론
+
+
 
 ## Reference 
 
