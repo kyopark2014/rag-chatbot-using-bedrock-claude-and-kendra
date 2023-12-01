@@ -80,3 +80,18 @@ cdk deploy --all
 
 9) 설치가 완료되면 브라우저에서 아래와 같이 WebUrl를 확인하여 브라우저를 이용하여 접속합니다.
 
+설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
+
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/ebda48bd-5d19-4f4d-adec-30622b7054da)
+
+
+FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
+
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/fce5192f-93de-4ed8-a32e-8ba133d1c392)
+
+
+Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 등록된것을 확인할 수 있습니다.
+
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
+
+이후 Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다.
