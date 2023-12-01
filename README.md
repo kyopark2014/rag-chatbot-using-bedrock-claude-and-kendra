@@ -461,21 +461,9 @@ def get_reference(docs):
 - [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)에 따라 계정을 준비합니다.
 
 ### CDK를 이용한 인프라 설치
-[인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다. 설치가 완료되면 아래와 같이 Output을 확인할 수 있습니다. 
-
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/ebda48bd-5d19-4f4d-adec-30622b7054da)
+[인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다. 
 
 
-FAQ를 생성하기 위하여 아래에서 FAQUpdateforkoreanchatbot의 명령어를 복사해서 터미널에 붙여 넣기 합니다.
-
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/fce5192f-93de-4ed8-a32e-8ba133d1c392)
-
-
-Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_fsi"로 FAQ가 등록된것을 확인할 수 있습니다.
-
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
-
-이후 Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다.
 
 ## 실행결과
 
