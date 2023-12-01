@@ -25,9 +25,6 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(Relevant 
 
 
 
-### Kendra 준비
-
-AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
@@ -68,6 +65,11 @@ llm = Bedrock(
     callbacks=[StreamingStdOutCallbackHandler()],
     model_kwargs=parameters)
 ```
+
+### Kendra 준비
+
+AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md)와 같이 Kendra를 설치하고 사용할 준비를 합니다.
+
 
 ### 채팅이력을 저장하기 위한 메모리 준비 및 Dialog 저장
 
