@@ -376,7 +376,7 @@ def get_revised_question(connectionId, requestId, query):
 
 ### RAG를 이용한 결과 확인하기
 
-Kendra에 top_k개의 관련된 문서를 요청하여 받은 후에 아래와 같이 발취문(excerpt)를 추출하여 한개의 relevant_context를 생성합니다. 이후 아래와 같이 RAG용으로 만든 Prompt를 생성합니다. 
+Kendra에 top_k개의 관련된 문서를 요청하여 받은 후에 아래와 같이 발췌문(excerpt)를 추출하여 한개의 relevant_context를 생성합니다. 이후 아래와 같이 RAG용으로 만든 Prompt를 생성합니다. 
 
 ```python
 relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
