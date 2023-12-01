@@ -488,7 +488,7 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 ## 결론
 
-Amazon Bedrock의 Claude LLM으로 기업의 데이터를 안전하고 효율적으로 사용할 수 있도록 한국어 Chatbot을 만들었습니다. Kendra에서 관련된 문서를 조회할때 검색의 정확도를 고려하여 관련성이 높은 문서들을 선택하였고, FAQ (Frequently Asking Questions)을 활용하여 검색의 정확도를 높이는 방식으로 RAG의 성능을 개선하였습니다. 새로운 기능 개발이나 기존 소스의 재활용을 위해 오픈된 개발환경인 LangChain을 활용하여 LLM과 어플리케이션의 인터페이스를 구성하였습니다. 또한 서버리스 서비스들로 레퍼런스 Architecture를 만들었으므로, 유지보수에 대한 부담을 줄이고 빠른 개발 및 상용화가 가능합니다. Amazon Bedrock을 활용하면 200k token의 context window를 가지면서 높은 한국어 성능을 보이는 Claude v2.1을 편리하게 이용할 수 있습니다. 또한, 기업의 데이터를 안전하고 편리하게 사용할 수 있는 Kendra를 활용해 RAG를 구성하므로써, 빠른 개발 및 안정적인 서비스 제공이 가능합니다. 
+Amazon Bedrock의 Claude LLM을 이용하여, RAG가 적용된 한국어 Chatbot을 만들었습니다. Kendra에서 관련된 문서를 조회할때 검색의 정확도를 고려하여 관련성이 높은 문서들을 선택하였고, FAQ (Frequently Asking Questions)을 활용하여 검색의 정확도를 높이는 방식으로 RAG의 성능을 개선하였습니다. 새로운 기능 개발이나 기존 소스의 재활용을 위해 오픈된 개발환경인 LangChain을 활용하여 LLM과 어플리케이션의 인터페이스를 구성하였습니다. 또한 서버리스 서비스들로 레퍼런스 Architecture를 만들었으므로, 유지보수에 대한 부담을 줄이고 빠른 개발 및 상용화가 가능합니다. Amazon Bedrock을 활용하면 200k token의 context window를 가지면서 높은 한국어 성능을 보이는 Claude v2.1을 편리하게 이용할 수 있습니다. 또한, 기업의 데이터를 안전하고 편리하게 사용할 수 있는 Kendra를 활용해 RAG를 구성하므로써, 빠른 개발 및 안정적인 서비스 제공이 가능합니다. 
 
 
 ## Reference 
