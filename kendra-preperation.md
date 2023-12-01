@@ -53,7 +53,7 @@ roleLambdaWebsocket.attachInlinePolicy(
 );
 ```
 
-Kendra를 위한 trust statement는 아래와 같습니다.
+Kendra를 위한 Trust Statement는 아래와 같습니다.
 
 ```java
 {
