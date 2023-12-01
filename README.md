@@ -16,7 +16,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 1) 사용자가 CloudFront의 Domain으로 접속합니다.
 2) 사용자가 로그인을 화면 이전 대화이력을 가져와서 화면에 보여줍니다.
 3) 채팅창에서 질문(Question)을 입력합니다.
-4) 질문은 Web Socket 방식으로 API Gateway을 통해 [lambda (chat)](./lambda-chat/index.js)에 전달됩니다.
+4) 질문은 Web Socket 방식으로 API Gateway을 통해 [lambda (chat)](./lambda-chat-ws/lambda_function.py)에 전달됩니다.
 5) lambda(chat)은 사용자의 이전 대화이력이 있는지 확인하여 없다면, DynamoDB에서 로드하여 활용합니다.
 6) lambda(chat)은 대화이력과 현재의 질문을 가지고 대화에 맞는 적절한 새로운 질문을 Bedrock을 통해 생성합니다.
 7) lambda(chat)은 새로운 질문으로 Kendra로 부터 관련된 문장(Relevant Documents)가 있는지 확인합니다.
