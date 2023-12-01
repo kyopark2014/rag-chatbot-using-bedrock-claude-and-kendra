@@ -29,9 +29,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 
 ## 주요 시스템 구성
 
-
-
-
+전체 시스템의 상세 구현에 대하여 아래와 같이 설명합니다.
 
 ### Bedrock의 Claude LLM을 LangChain으로 설정하기
 
