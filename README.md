@@ -468,12 +468,10 @@ def get_reference(docs):
 - [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)에 따라 계정을 준비합니다.
 
 ### CDK를 이용한 인프라 설치
-[인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다. 
 
-
+본 실습에서는 Kendra 설치가 가능한 Tokyo 리전 (ap-northeast-1)을 사용합니다. [인프라 설치](./deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. [CDK 구현 코드](./cdk-rag-chatbot-with-kendra/README.md)에서는 Typescript로 인프라를 정의하는 방법에 대해 상세히 설명하고 있습니다. 
 
 ## 실행결과
-
 
 [FAQ-banking](./contents/faq/faq-banking.csv)의 내용을 참조하는 동작을 시험하기 위하여, 채팅장에서 "남서울은행의 수퍼 정기 예금에 대해 설명해주세요."라는 질문을 하면, 아래와 같이 Kendra의 FAQ를 참조한 답변을 얻을 수 있습니다. 만약 첫번째 접속시에 “재접속중입니다”로 나오면 웹페이지를 새로고침후 재시도합니다.
 
@@ -490,7 +488,7 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 더이상 인프라를 사용하지 않는 경우에 아래처럼 모든 리소스를 삭제할 수 있습니다. 
 
-1) [API Gateway Console](https://ap-northeast-1.console.aws.amazon.com/apigateway/main/apis?region=ap-northeast-1)로 접속하여 "rest-api-for-stream-chatbot", "ws-api-for-stream-chatbot"을 삭제합니다.
+1) [API Gateway Console](https://ap-northeast-1.console.aws.amazon.com/apigateway/main/apis?region=ap-northeast-1)로 접속하여 "api-chatbot-for-rag-chatbot-with-kendra", "api-rag-chatbot-with-kendra"을 삭제합니다.
 
 2) [Cloud9 Console](https://ap-northeast-1.console.aws.amazon.com/cloud9control/home?region=ap-northeast-1#/)에 접속하여 아래의 명령어로 전체 삭제를 합니다.
 
