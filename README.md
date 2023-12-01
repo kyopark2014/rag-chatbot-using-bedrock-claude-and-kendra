@@ -494,7 +494,7 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 
 ```text
-cdk destroy --all
+cd ~/environment/rag-chatbot-using-bedrock-claude-and-kendra/cdk-rag-chatbot-with-kendra/ && cdk destroy --all
 ```
 
 
