@@ -321,7 +321,7 @@ if len(resp["ResultItems"]) >= 1:
 
 ### 채팅이력을 이용하여 새로운 질문 생성하기
 
-채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 historyf로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
+채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 chat_history로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
 
 ```python
 def get_revised_question(connectionId, requestId, query):        
