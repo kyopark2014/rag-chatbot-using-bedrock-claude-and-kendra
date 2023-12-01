@@ -94,7 +94,9 @@ Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_banking"로 Sampl
 ![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
 
 
-12) Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다. 첫번째 메시지 발송시에 “재접속중입니다”로 나오면 웹페이지를 새로고침 합니다.
+12) Output의 WebUrlforkoreanchatbot에 있는 URL을 복사하여 웹브라우저로 접속합니다. User Id로 적당한 이름을 넣고, Conversation Type으로는 "2. Question/Answering (RAG-Kendra)"를 선택합니다.
+
+![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/3635bad9-972c-4f6d-aa83-4a06368c6fe9)
 
 
 
