@@ -4,7 +4,7 @@
 
 Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Relevant Documents)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ(Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 정확한 답변을 할 수 있습니다. 이와같이 본 게시글에서는 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 RAG가 사용할 문장들을 선택하고, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 활용하여, RAG의 정확도를 향상시키는 방법을 설명합니다. 
 
-아래 그림은 전체적인 Arhcitecture를 보여주고 있습니다. 사용자는 [Amazon CloudFront](https://aws.amazon.com/ko/cloudfront/)을 통해 채팅화면에 접속합니다. Client는 [Amazon API Gateway](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/welcome.html)와 [Amazon Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)를 통해 [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)에 저장된 대화이력을 가져와서 화면에 보여줄 수 있습니다. 사용자가 메시지를 입력하면 Web Socket을 처리하는 API Gateway를 통해 stream 방식으로 Chatbot과 대화를 할 수 있습니다. Lambda(chat)은 대화이력을 이용해 Assistant와 상호작용(interaction)을 할수 있도록 하며, Kendra에서 질문과 관련된 문장(Relevant Documents)를 가져와서 RAG 동작을 수행합니다. 
+아래 그림은 전체적인 Arhcitecture를 보여주고 있습니다. 사용자는 [Amazon CloudFront](https://aws.amazon.com/ko/cloudfront/)을 통해 채팅화면에 접속합니다. Client는 [Amazon API Gateway](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/welcome.html)와 [Amazon Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)를 통해 [Amazon DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)에 저장된 대화이력을 가져와서 화면에 보여줄 수 있습니다. 사용자가 메시지를 입력하면 Web Socket을 처리하는 API Gateway를 통해 stream 방식으로 Chatbot과 대화를 할 수 있습니다. Lambda(chat)은 대화이력을 이용해 Assistant와 상호작용(interaction)을 할 수 있도록 하며, Kendra에서 질문과 관련된 문장(Relevant Documents)를 가져와서 RAG 동작을 수행합니다. 
 
 
 <img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
@@ -488,7 +488,7 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 ## 결론
 
-Amazon Bedrock의 Claude LLM을 이용하여, RAG가 적용된 한국어 Chatbot을 만들었습니다. Kendra에서 관련된 문서를 조회할때 검색의 정확도를 고려하여 관련성이 높은 문서들을 선택하였고, FAQ (Frequently Asking Questions)을 활용하여 검색의 정확도를 높이는 방식으로 RAG의 성능을 개선하였습니다. 또한, 새로운 기능 개발이나 기존 소스의 재활용을 위해 오픈된 개발환경인 LangChain을 활용하여 LLM과 어플리케이션의 인터페이스를 구성하였습니다. 서버리스 서비스들을 활용하여 전체적인 Architecture를 구성하였으므려, 유지보수에 대한 부담을 줄이고 빠른 개발 및 상용화가 가능합니다. 이와 같이 Amazon Bedrock을 활용하면 200k token의 context window를 가지면서 높은 한국어 성능을 보이는 Claude v2.1을 편리하게 이용할 수 있습니다. 또한, 기업의 데이터를 안전하고 편리하게 사용할 수 있는 Kendra를 활용해 RAG를 구성하므로써, 빠른 개발 및 안정적인 서비스 제공이 가능합니다. 
+Amazon Bedrock의 Claude LLM을 이용하여, RAG가 적용된 한국어 Chatbot을 만들었습니다. Kendra에서 관련된 문서를 조회할때 검색의 정확도를 고려하여 관련성이 높은 문서들을 선택하였고, FAQ (Frequently Asking Questions)을 활용하여 검색의 정확도를 높이는 방식으로 RAG의 성능을 개선하였습니다. 또한, 새로운 기능 개발이나 기존 소스의 재활용을 위해 오픈된 개발환경인 LangChain을 활용하여 LLM과 어플리케이션의 인터페이스를 구성하였습니다. 서버리스 서비스들을 활용하여 전체적인 Architecture를 구성하였으므로, 유지보수에 대한 부담을 줄이고 빠른 개발 및 상용화가 가능합니다. 이와 같이 Amazon Bedrock을 활용하면 200k token context window를 가지면서 높은 한국어 성능을 보이는 Claude v2.1을 편리하게 이용할 수 있습니다. 또한, Kendra를 활용해 RAG를 구성함므로써, 기업의 데이터를 안전하고 편리하게 사용할 수 있으며, 빠른 개발 및 안정적인 서비스 제공이 가능합니다. 
 
 
 ## Reference 
