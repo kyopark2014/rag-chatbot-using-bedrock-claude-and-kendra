@@ -4,7 +4,7 @@
 기업의 데이터를 활용하여 질문과 답변을 수행하는 한국어 Chatbot을 RAG를 이용해 구현합니다. 이때 한국어 LLM으로는 Amazon Bedrock의 Claude 모델을 사용하고, 지식 저장소로 Amazon Kendra를 이용합니다. 
 
 
-Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(relevant document)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(relevant documents)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ(Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 좋은 답변을 할 수 있습니다. 이와같이 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 관련된 문장으로 활용한 있다면,  RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
+Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서(Relevant Documents)을 찾을 수 있습니다. 그러나, 만약 질문과 연관된 문장이 없다면, 가장 유사한 문장이 선택되므로, 때로는 관계가 높지 않은 문장이 관련된 문장(Relevant Documentss)으로 선택되어 RAG의 정확도에 영향을 줄 수 있습니다. 또한 Kendra에서 선택되는 문서들의 나누는 방식(chunk)에 따라서 원래 의미가 변경될 수 있으며, 유사한 문서가 많으면 정확한 답변을 가진 문서를 찾지 못할 수 있습니다. 만약 자주 사용되는 질문과 답변을 FAQ(Frequently Asked Questions)로 가지고 있다면, 다수의 문서를 검색해서 찾는것보다 더 좋은 답변을 할 수 있습니다. 이와같이 Kendra가 검색한 문서들의 정확도([ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html))를 기준으로 사용할 문장들을 선택하거나, Kendra의 [FAQ((Frequently Asked Questions)](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 우선적으로 관련된 문장으로 활용한 있다면,  RAG의 정확도를 향상시킬 수 있습니다. 이와 같이 본 게시글은 Kendra를 이용한 RAG의 검색 정확도를 높이기 위하여, [Kendra의 ScoreAttributes](https://docs.aws.amazon.com/kendra/latest/APIReference/API_ScoreAttributes.html)와 [FAQ](https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)를 활용합니다. 
 
 <img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/14ff613a-6a73-4125-b883-e295243ffa3e" width="800">
 
@@ -95,7 +95,7 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 ### Kendra에 문서 등록하기
 
-RAG에 사용한 문서의 경로(URI)를 채팅화면에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Document)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 또한, 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 하고, S3 Object의 파일 확장자를 추출하여 문서 타입을 정의합니다. 
+RAG에 사용한 문서의 경로(URI)를 채팅화면에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Documents)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 또한, 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 하고, S3 Object의 파일 확장자를 추출하여 문서 타입을 정의합니다. 
 
 Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원하며, 문서의 크기는 최대 50MB입니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
 
@@ -218,7 +218,7 @@ Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. �
 }
 ```
 
-상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "How many free clinics are in Spokane WA? 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Document)로 사용하여야 합니다. 또한, Kendra의 FAQ는 Query API를 이용하므로, FAQ의 Answer가 길 경우에, 앞부부분 참조될 수 있습니다. 따라서, FAQ 문서를 Kendra의 Data Source에 추가로 등록하여 전체가 참고될 수 있도록 합니다. 
+상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "How many free clinics are in Spokane WA? 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Documents)로 사용하여야 합니다. 또한, Kendra의 FAQ는 Query API를 이용하므로, FAQ의 Answer가 길 경우에, 앞부부분 참조될 수 있습니다. 따라서, FAQ 문서를 Kendra의 Data Source에 추가로 등록하여 전체가 참고될 수 있도록 합니다. 
 
 
 ### LangChain의 활용
@@ -290,7 +290,7 @@ return doc_info
 ```
 
 
-[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(relevant document)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 관련 문서(relevant docs)로 활용하고 있습니다. 
+[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(Relevant Documents)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 관련 문서(relevant docs)로 활용하고 있습니다. 
 
 ```python
 resp = kendra_client.query(
