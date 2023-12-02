@@ -622,7 +622,7 @@ def retrieve_from_Kendra(query, top_k):
                 # print('retrieve_docs: ', retrieve_docs)
 
             # double check                 
-            isReady == False
+            isReady = False
             excerpts = []
             for doc in retrieve_docs:
                 print('doc: ', doc)
