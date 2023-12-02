@@ -28,6 +28,8 @@ from langchain.chains import LLMChain
 from langchain.retrievers import AmazonKendraRetriever
 from langchain.chains import ConversationalRetrievalChain
 
+from langchain.vectorstores.faiss import FAISS
+
 s3 = boto3.client('s3')
 s3_bucket = os.environ.get('s3_bucket') # bucket name
 s3_prefix = os.environ.get('s3_prefix')
@@ -619,6 +621,51 @@ def retrieve_from_Kendra(query, top_k):
                 retrieve_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="retrieve", query_result=query_result))
                 # print('retrieve_docs: ', retrieve_docs)
 
+            # double check                 
+            isReady == False
+            excerpts = []
+            for doc in retrieve_docs:
+                print('doc: ', doc)
+                excerpts.append(
+                        Document(
+                            page_content=doc['metadata']['excerpt'],
+                            metadata={
+                                'name': doc['metadata']['title'],
+                                # 'page':i+1,
+                                # 'uri': path+parse.quote(object)
+                            }
+                        )
+                    )  
+            print('excerpts: ', excerpts)
+
+            # embedding for RAG
+            bedrock_embeddings = BedrockEmbeddings(
+                client=boto3_bedrock,
+                region_name = bedrock_region,
+                model_id = 'amazon.titan-embed-text-v1' 
+            )    
+
+            if isReady == False:   
+                embeddings = bedrock_embeddings
+                vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
+                    excerpts,  # documents
+                    embeddings  # embeddings
+                )
+                isReady = True
+            else:
+                store_document_for_faiss(doc, vectorstore_faiss)
+            
+            rel_documents = vectorstore_faiss.similarity_search_with_score(query)
+
+            for i, document in enumerate(rel_documents):
+                print(f'## Document {i+1}: {document}')
+
+                #name = document[0].metadata['name']
+                #page = document[0].metadata['page']
+                #uri = document[0].metadata['uri']
+                #confidence = document[1]                            
+            
+
             print('Looking for FAQ...')
             try:
                 resp =  kendra_client.query(
@@ -1108,6 +1155,11 @@ def getResponse(connectionId, jsonBody):
         #print('resp, ', resp)
 
     return msg
+
+def store_document_for_faiss(docs, vectorstore_faiss):
+    print('store document into faiss')    
+    vectorstore_faiss.add_documents(docs)       
+    print('uploaded into faiss')
 
 def lambda_handler(event, context):
     # print('event: ', event)
