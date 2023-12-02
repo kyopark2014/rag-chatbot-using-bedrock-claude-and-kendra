@@ -717,10 +717,9 @@ def retrieve_from_Kendra(query, top_k):
         print(f'## Document {i+1}: {json.dumps(rel_doc)}')  
 
     # return relevant_docs
-    return check_confidence(relevant_docs)
+    return check_confidence(query, relevant_docs)
 
-def check_confidence(relevant_docs):
-    # confidence check                 
+def check_confidence(query, relevant_docs):
     excerpts = []
     for i, doc in enumerate(relevant_docs):
         print('doc: ', doc)
@@ -740,11 +739,10 @@ def check_confidence(relevant_docs):
         region_name = bedrock_region,
         model_id = 'amazon.titan-embed-text-v1' 
     ) 
-    vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
+    vectorstore_faiss = FAISS.from_documents(
         excerpts,  # documents
         embeddings  # embeddings
-    )
-            
+    )            
     rel_documents = vectorstore_faiss.similarity_search_with_score(query)
 
     docs = []
