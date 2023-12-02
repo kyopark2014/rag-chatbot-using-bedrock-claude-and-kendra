@@ -619,52 +619,7 @@ def retrieve_from_Kendra(query, top_k):
 
                 #if confidence == 'VERY_HIGH' or confidence == 'HIGH' or confidence == 'MEDIUM': only for "en"
                 retrieve_docs.append(extract_relevant_doc_for_kendra(query_id=query_id, apiType="retrieve", query_result=query_result))
-                # print('retrieve_docs: ', retrieve_docs)
-
-            # double check                 
-            isReady = False
-            excerpts = []
-            for doc in retrieve_docs:
-                print('doc: ', doc)
-                excerpts.append(
-                        Document(
-                            page_content=doc['metadata']['excerpt'],
-                            metadata={
-                                'name': doc['metadata']['title'],
-                                # 'page':i+1,
-                                # 'uri': path+parse.quote(object)
-                            }
-                        )
-                    )  
-            print('excerpts: ', excerpts)
-
-            # embedding for RAG
-            bedrock_embeddings = BedrockEmbeddings(
-                client=boto3_bedrock,
-                region_name = bedrock_region,
-                model_id = 'amazon.titan-embed-text-v1' 
-            )    
-
-            if isReady == False:   
-                embeddings = bedrock_embeddings
-                vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
-                    excerpts,  # documents
-                    embeddings  # embeddings
-                )
-                isReady = True
-            else:
-                store_document_for_faiss(doc, vectorstore_faiss)
-            
-            rel_documents = vectorstore_faiss.similarity_search_with_score(query)
-
-            for i, document in enumerate(rel_documents):
-                print(f'## Document {i+1}: {document}')
-
-                #name = document[0].metadata['name']
-                #page = document[0].metadata['page']
-                #uri = document[0].metadata['uri']
-                #confidence = document[1]                            
-            
+                # print('retrieve_docs: ', retrieve_docs)            
 
             print('Looking for FAQ...')
             try:
@@ -760,6 +715,41 @@ def retrieve_from_Kendra(query, top_k):
 
     for i, rel_doc in enumerate(relevant_docs):
         print(f'## Document {i+1}: {json.dumps(rel_doc)}')  
+
+    # confidence check                 
+    excerpts = []
+    for i, doc in enumerate(relevant_docs):
+        print('doc: ', doc)
+        excerpts.append(
+            Document(
+                page_content=doc['metadata']['excerpt'],
+                metadata={
+                    'name': doc['metadata']['title'],
+                    'order':i,
+                }
+            )
+        )  
+    print('excerpts: ', excerpts)
+
+    embeddings = BedrockEmbeddings(
+        client=boto3_bedrock,
+        region_name = bedrock_region,
+        model_id = 'amazon.titan-embed-text-v1' 
+    ) 
+    vectorstore_faiss = FAISS.from_documents( # create vectorstore from a document
+        excerpts,  # documents
+        embeddings  # embeddings
+    )
+            
+    rel_documents = vectorstore_faiss.similarity_search_with_score(query)
+
+    for i, document in enumerate(rel_documents):
+        print(f'## Document {i+1}: {document}')
+
+        order = document[0].metadata['order']
+        name = document[0].metadata['name']
+        confidence = document[1]
+        print(f"{order}: {name} - {confidence}")
 
     return relevant_docs
 
