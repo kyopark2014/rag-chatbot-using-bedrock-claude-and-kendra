@@ -326,6 +326,52 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
+Retrieve API의 경우에 "ScoreAttributes"를 2023년 12월(현재)에는 영어만 제공하고 있으므로 한국어에 대해서 검색범위를 제한할 수 없습니다. 따라서, 아래와 같이 [In-memory 방식의 Faiss VectoreStore](https://python.langchain.com/docs/integrations/vectorstores/faiss)를 이용하여 관련이 없는 문서는 제외하였습니다. 이것은 Embedding과 Vector Store에 대한 검색을 필요로 하므로, 추후 Kendra에서 한국어에 대해 "ScoreAttributes"를 지원하게 되면 제외할 수 있습니다.
+
+```python
+def check_confidence(query, relevant_docs):
+    excerpts = []
+    for i, doc in enumerate(relevant_docs):
+        print('doc: ', doc)
+        excerpts.append(
+            Document(
+                page_content=doc['metadata']['excerpt'],
+                metadata={
+                    'name': doc['metadata']['title'],
+                    'order':i,
+                }
+            )
+        )  
+    print('excerpts: ', excerpts)
+
+    embeddings = BedrockEmbeddings(
+        client=boto3_bedrock,
+        region_name = bedrock_region,
+        model_id = 'amazon.titan-embed-text-v1' 
+    ) 
+    vectorstore_confidence = FAISS.from_documents(
+        excerpts,  # documents
+        embeddings  # embeddings
+    )            
+    rel_documents = vectorstore_confidence.similarity_search_with_score(query)
+
+    docs = []
+    for i, document in enumerate(rel_documents):
+        print(f'## Document {i+1}: {document}')
+
+        order = document[0].metadata['order']
+        name = document[0].metadata['name']
+        confidence = document[1]
+        print(f"{order} {name}: {confidence}")
+
+        docs.append(relevant_docs[order])
+    
+    print('selected docs: ', docs)
+
+    return docs
+```
+
+
 ### 대화이력을 이용하여 새로운 질문 생성하기
 
 채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 chat_history로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
