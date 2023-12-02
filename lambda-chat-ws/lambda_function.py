@@ -6,9 +6,8 @@ import datetime
 from io import BytesIO
 import PyPDF2
 import csv
-import sys, traceback
+import traceback
 import re
-import base64
 from urllib import parse
 
 from langchain.prompts import PromptTemplate
@@ -22,12 +21,12 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from botocore.config import Config
 
-from langchain.embeddings import BedrockEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.chains import LLMChain
 from langchain.retrievers import AmazonKendraRetriever
 from langchain.chains import ConversationalRetrievalChain
 
+from langchain.embeddings import BedrockEmbeddings
 from langchain.vectorstores.faiss import FAISS
 
 s3 = boto3.client('s3')
@@ -445,7 +444,7 @@ def get_revised_question(connectionId, requestId, query):
         {chat_history}
         </history>
 
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. <question>이 <history>와 관련이 없다면, <question>의 내용을 전달합니다.
+        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. 
 
         <question>            
         {question}
@@ -716,8 +715,10 @@ def retrieve_from_Kendra(query, top_k):
     for i, rel_doc in enumerate(relevant_docs):
         print(f'## Document {i+1}: {json.dumps(rel_doc)}')  
 
-    # return relevant_docs
-    return check_confidence(query, relevant_docs)
+    if len(relevant_docs) >= 1:
+        return check_confidence(query, relevant_docs)
+    else:
+        return relevant_docs
 
 def check_confidence(query, relevant_docs):
     excerpts = []
