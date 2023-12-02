@@ -716,6 +716,10 @@ def retrieve_from_Kendra(query, top_k):
     for i, rel_doc in enumerate(relevant_docs):
         print(f'## Document {i+1}: {json.dumps(rel_doc)}')  
 
+    # return relevant_docs
+    return check_confidence(relevant_docs)
+
+def check_confidence(relevant_docs):
     # confidence check                 
     excerpts = []
     for i, doc in enumerate(relevant_docs):
@@ -743,6 +747,7 @@ def retrieve_from_Kendra(query, top_k):
             
     rel_documents = vectorstore_faiss.similarity_search_with_score(query)
 
+    docs = []
     for i, document in enumerate(rel_documents):
         print(f'## Document {i+1}: {document}')
 
@@ -751,7 +756,11 @@ def retrieve_from_Kendra(query, top_k):
         confidence = document[1]
         print(f"{order}: {name} - {confidence}")
 
-    return relevant_docs
+        docs.append(relevant_docs[order])
+    
+    print('selected docs: ', docs)
+
+    return docs
 
 def get_reference(docs, rag_method, rag_type):
     if rag_method == 'RetrievalQA' or rag_method == 'ConversationalRetrievalChain':
@@ -1145,11 +1154,6 @@ def getResponse(connectionId, jsonBody):
         #print('resp, ', resp)
 
     return msg
-
-def store_document_for_faiss(docs, vectorstore_faiss):
-    print('store document into faiss')    
-    vectorstore_faiss.add_documents(docs)       
-    print('uploaded into faiss')
 
 def lambda_handler(event, context):
     # print('event: ', event)
