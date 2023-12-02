@@ -445,7 +445,7 @@ def get_revised_question(connectionId, requestId, query):
         {chat_history}
         </history>
 
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. <question>이 <history>와 관련이 없다면, 새로운 질문으로 <question>을 그대로 사용합니다.
+        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. <question>이 <history>와 관련이 없다면, <question>의 내용을 전달합니다.
 
         <question>            
         {question}
@@ -459,7 +459,7 @@ def get_revised_question(connectionId, requestId, query):
         </history>
         Answer only with the new question.
 
-        Human: using <history>, rephrase the follow up <question> to be a standalone question.
+        Human: using <history>, rephrase the follow up <question> to be a standalone question. 
          
         <quesion>
         {question}
@@ -739,11 +739,11 @@ def check_confidence(query, relevant_docs):
         region_name = bedrock_region,
         model_id = 'amazon.titan-embed-text-v1' 
     ) 
-    vectorstore_faiss = FAISS.from_documents(
+    vectorstore_confidence = FAISS.from_documents(
         excerpts,  # documents
         embeddings  # embeddings
     )            
-    rel_documents = vectorstore_faiss.similarity_search_with_score(query)
+    rel_documents = vectorstore_confidence.similarity_search_with_score(query)
 
     docs = []
     for i, document in enumerate(rel_documents):
