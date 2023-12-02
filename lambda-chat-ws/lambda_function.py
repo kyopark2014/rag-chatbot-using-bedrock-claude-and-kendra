@@ -445,7 +445,7 @@ def get_revised_question(connectionId, requestId, query):
         {chat_history}
         </history>
 
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요.
+        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. <question>이 <history>와 관련이 없다면, 새로운 질문으로 <question>을 그대로 사용합니다.
 
         <question>            
         {question}
@@ -752,7 +752,7 @@ def check_confidence(query, relevant_docs):
         order = document[0].metadata['order']
         name = document[0].metadata['name']
         confidence = document[1]
-        print(f"{order}: {name} - {confidence}")
+        print(f"{order} {name}: {confidence}")
 
         docs.append(relevant_docs[order])
     
