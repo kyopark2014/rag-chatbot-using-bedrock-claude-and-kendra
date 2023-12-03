@@ -723,7 +723,7 @@ def retrieve_from_Kendra(query, top_k):
 def check_confidence(query, relevant_docs):
     excerpts = []
     for i, doc in enumerate(relevant_docs):
-        print('doc: ', doc)
+        # print('doc: ', doc)
         excerpts.append(
             Document(
                 page_content=doc['metadata']['excerpt'],
@@ -733,7 +733,7 @@ def check_confidence(query, relevant_docs):
                 }
             )
         )  
-    print('excerpts: ', excerpts)
+    # print('excerpts: ', excerpts)
 
     embeddings = BedrockEmbeddings(
         client=boto3_bedrock,
@@ -744,7 +744,10 @@ def check_confidence(query, relevant_docs):
         excerpts,  # documents
         embeddings  # embeddings
     )            
-    rel_documents = vectorstore_confidence.similarity_search_with_score(query)
+    rel_documents = vectorstore_confidence.similarity_search_with_score(
+        query=query,
+        k=top_k
+    )
 
     docs = []
     for i, document in enumerate(rel_documents):
@@ -755,9 +758,10 @@ def check_confidence(query, relevant_docs):
         confidence = document[1]
         print(f"{order} {name}: {confidence}")
 
-        docs.append(relevant_docs[order])
+        if confidence < 200:
+            docs.append(relevant_docs[order])
     
-    print('selected docs: ', docs)
+    # print('selected docs: ', docs)
 
     return docs
 
