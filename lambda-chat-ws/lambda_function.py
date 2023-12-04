@@ -625,7 +625,7 @@ def retrieve_from_Kendra(query, top_k):
                 resp =  kendra_client.query(
                     IndexId = index_id,
                     QueryText = query,
-                    PageSize = int(top_k/2),
+                    PageSize = 4, # Maximum number of results returned for FAQ = 4 (default)
                     QueryResultTypeFilter = "QUESTION_ANSWER",  # 'QUESTION_ANSWER', 'ANSWER', "DOCUMENT"
                     AttributeFilter = {
                         "EqualsTo": {      
