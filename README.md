@@ -297,13 +297,13 @@ return doc_info
 ```
 
 
-[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 Retrieve와 Query 결과를 모두 관련 문서(Relevant Documents)로 사용하기 위해 전체의 반으로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 관련 문서(relevant docs)로 활용하고 있습니다. 
+[Kendra의 Query API](https://docs.aws.amazon.com/ko_kr/kendra/latest/APIReference/API_Query.html)를 이용하여, 'QueryResultTypeFilter'를 "QUESTION_ANSWER"로 지정하면, FAQ의 결과만을 얻을 수 있습니다. 컨텐츠를 등록할때 "_language_code"을 "ko"로 지정하였으므로, 동일하게 설정합니다. PageSize는 몇개의 문장을 가져올것인지를 지정하는 것으로서 여기서는 ["Maximum number of results returned for FAQ"](https://docs.aws.amazon.com/kendra/latest/dg/quotas.html)의 기본값인 4로 설정하였습니다. 여기서는 FAQ중에 관련도가 높은것만 활용하기 위하여, ScoreConfidence가 "VERY_HIGH"와 "HIGH"인 문서들만 관련 문서(relevant docs)로 활용하고 있습니다. 
 
 ```python
 resp = kendra_client.query(
     IndexId = index_id,
     QueryText = query,
-    PageSize = int(top_k/2),
+    PageSize = 4,
     QueryResultTypeFilter = "QUESTION_ANSWER",  
     AttributeFilter = {
         "EqualsTo": {
