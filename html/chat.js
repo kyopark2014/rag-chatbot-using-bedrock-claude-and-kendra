@@ -1,4 +1,4 @@
-const endpoint = 'wss://g51jvs4r48.execute-api.ap-northeast-1.amazonaws.com/dev';
+const endpoint = 'wss://4sey7gdzd8.execute-api.ap-northeast-1.amazonaws.com/dev';
 const langstate = 'korean'; // korean or english
 
 console.log('feedback...');
