@@ -265,14 +265,6 @@ function onSend(e) {
             convType = 'qa',
             rag_type = 'kendra'
         }
-        else if(conversationType=='qa-opensearch') {
-            convType = 'qa',
-            rag_type = 'opensearch'
-        }
-        else if(conversationType=='qa-faiss') {
-            convType = 'qa',
-            rag_type = 'faiss'
-        }
         else {
             convType = conversationType,
             rag_type = ''
@@ -544,14 +536,6 @@ attachFile.addEventListener('click', function(){
                             if(conversationType=='qa-kendra') {
                                 convType = 'qa',
                                 rag_type = 'kendra'
-                            }
-                            else if(conversationType=='qa-opensearch') {
-                                convType = 'qa',
-                                rag_type = 'opensearch'
-                            }
-                            else if(conversationType=='qa-faiss') {
-                                convType = 'qa',
-                                rag_type = 'faiss'
                             }
                             else {
                                 convType = conversationType,
