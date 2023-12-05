@@ -225,7 +225,7 @@ Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. �
 }
 ```
 
-상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "How many free clinics are in Spokane WA? 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Documents)로 사용하여야 합니다. 또한, Kendra의 FAQ는 Query API를 이용하므로, FAQ의 Answer가 길 경우에, 앞부부분 참조될 수 있습니다. 따라서, FAQ 문서를 Kendra의 Data Source에 추가로 등록하여 전체가 참고될 수 있도록 합니다. 
+상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "How many free clinics are in Spokane WA? 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Documents)로 사용하여야 합니다. 또한, Kendra의 FAQ는 Query API를 이용하므로, FAQ의 Answer가 길 경우에, 앞부분만 참조될 수 있습니다. 따라서, FAQ 문서를 Kendra의 Data Source에 추가로 등록하여 전체가 참고될 수 있도록 합니다. 
 
 
 ### LangChain의 활용
