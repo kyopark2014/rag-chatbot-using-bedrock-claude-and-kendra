@@ -532,7 +532,7 @@ RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코�
 
 ![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/a204e83f-94be-44a8-89f8-9fa7d5c269bf)
 
-대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다.
+대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다. 만약 결과 메시지 하단에 참고 자료 링크 보여지지 않는다면, Kendra의 indexing에 끝나지 않은것이므로, 수분후에 다시 시도합니다.
 
 ## 리소스 정리하기 
 
