@@ -925,3 +925,10 @@ hr {
 .notification-text {
   text-align: center;
 }
+
+.istyping {
+  margin-left: 15px;
+  position: relative; 
+  background: white;
+  font-size: 1.0em; 
+}

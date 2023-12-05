@@ -1,5 +1,10 @@
 const endpoint = 'wss://g51jvs4r48.execute-api.ap-northeast-1.amazonaws.com/dev';
 const langstate = 'korean'; // korean or english
+
+console.log('feedback...');
+feedback = document.getElementById('feedback');
+feedback.style.display = 'none';    
+
 let webSocket
 let isConnected = false;
 webSocket = connect(endpoint, 'initial');
@@ -114,18 +119,26 @@ function connect(endpoint, type) {
                 }
                 // console.log('response: ', response);
 
-                if(response.status == 'completed') {                    
-                    console.log('received message: ', response.msg);                         
+                if(response.status == 'completed') {          
+                    feedback.style.display = 'none';          
+                    console.log('received message: ', response.msg);                  
                     addReceivedMessage(response.request_id, response.msg);  
                 }                
+                else if(response.status == 'istyping') {
+                    feedback.style.display = 'inline';
+                    // feedback.innerHTML = '<i>typing a message...</i>'; 
+                }
                 else if(response.status == 'proceeding') {
+                    feedback.style.display = 'none';
                     addReceivedMessage(response.request_id, response.msg);  
                 }                
                 else if(response.status == 'debug') {
+                    feedback.style.display = 'none';
                     console.log('debug: ', response.msg);
                     addNotifyMessage(response.msg);
                 }          
                 else if(response.status == 'error') {
+                    feedback.style.display = 'none';
                     console.log('error: ', response.msg);
                     addNotifyMessage(response.msg);
                 }   
@@ -248,9 +261,17 @@ function onSend(e) {
         let requestId = uuidv4();
         addSentMessage(requestId, timestr, message.value);
 
-        if(conversationType=='qa') {
+        if(conversationType=='qa-kendra') {
             convType = 'qa',
             rag_type = 'kendra'
+        }
+        else if(conversationType=='qa-opensearch') {
+            convType = 'qa',
+            rag_type = 'opensearch'
+        }
+        else if(conversationType=='qa-faiss') {
+            convType = 'qa',
+            rag_type = 'faiss'
         }
         else {
             convType = conversationType,
@@ -520,9 +541,17 @@ attachFile.addEventListener('click', function(){
                         if (xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status == 200 ) {
                             console.log(xmlHttp.responseText);
 
-                            if(conversationType=='qa') {
+                            if(conversationType=='qa-kendra') {
                                 convType = 'qa',
                                 rag_type = 'kendra'
+                            }
+                            else if(conversationType=='qa-opensearch') {
+                                convType = 'qa',
+                                rag_type = 'opensearch'
+                            }
+                            else if(conversationType=='qa-faiss') {
+                                convType = 'qa',
+                                rag_type = 'faiss'
                             }
                             else {
                                 convType = conversationType,

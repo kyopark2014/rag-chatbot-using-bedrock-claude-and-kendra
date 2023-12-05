@@ -403,6 +403,15 @@ def getAllowTime():
 
     return timeStr
 
+def isTyping(connectionId, requestId):    
+    msg_proceeding = {
+        'request_id': requestId,
+        'msg': 'Proceeding...',
+        'status': 'istyping'
+    }
+    #print('result: ', json.dumps(result))
+    sendMessage(connectionId, msg_proceeding)
+
 def readStreamMsg(connectionId, requestId, stream):
     msg = ""
     if stream:
@@ -887,9 +896,9 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
             return_source_documents=True,
             chain_type_kwargs={"prompt": PROMPT}
         )
+        isTyping(connectionId, requestId) 
         result = qa({"query": revised_question})    
         print('result: ', result)
-
         msg = readStreamMsg(connectionId, requestId, result['result'])
 
         source_documents = result['source_documents']
@@ -930,6 +939,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         PROMPT = get_prompt_template(revised_question, convType)
         #print('PROMPT: ', PROMPT)
         try: 
+            isTyping(connectionId, requestId) 
             stream = llm(PROMPT.format(context=relevant_context, question=revised_question))
             msg = readStreamMsg(connectionId, requestId, stream)
         except Exception:
@@ -956,6 +966,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
 def get_answer_from_conversation(text, conversation, convType, connectionId, requestId):
     conversation.prompt = get_prompt_template(text, convType)
     try: 
+        isTyping(connectionId, requestId) 
         stream = conversation.predict(input=text)
         #print('stream: ', stream)                        
         msg = readStreamMsg(connectionId, requestId, stream)
@@ -978,6 +989,7 @@ def get_answer_from_PROMPT(text, convType, connectionId, requestId):
     #print('PROMPT: ', PROMPT)
 
     try: 
+        isTyping(connectionId, requestId) 
         stream = llm(PROMPT.format(input=text))
         msg = readStreamMsg(connectionId, requestId, stream)
     except Exception:
