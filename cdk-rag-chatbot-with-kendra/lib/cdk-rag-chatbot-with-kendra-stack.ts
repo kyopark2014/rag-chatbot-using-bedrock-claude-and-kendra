@@ -29,7 +29,7 @@ const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, Conversati
 
 const enableReference = 'true';
 const debugMessageMode = 'false'; // if true, debug messages will be delivered to the client.
-const numberOfRelevantDocs = '10';
+const numberOfRelevantDocs = '8';
 
 export class CdkRagChatbotWithKendraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
