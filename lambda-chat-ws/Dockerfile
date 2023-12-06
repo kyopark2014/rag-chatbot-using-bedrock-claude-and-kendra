@@ -10,8 +10,6 @@ RUN /var/lang/bin/python3.11 -m pip install --upgrade pip
 
 RUN /var/lang/bin/python3 -m pip install PyPDF2
 RUN /var/lang/bin/python3 -m pip install langchain
-RUN /var/lang/bin/python3 -m pip install unstructured
-RUN /var/lang/bin/python3 -m pip install opensearch-py
 RUN /var/lang/bin/python3 -m pip install faiss-cpu
 
 RUN /var/lang/bin/python3 -m pip install botocore --upgrade
