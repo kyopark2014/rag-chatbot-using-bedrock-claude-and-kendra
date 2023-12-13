@@ -178,7 +178,6 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         description: 'The arn of resource',
       });
     }
-
     const kendraPolicy = new iam.PolicyStatement({
       resources: [kendraResourceArn],
       actions: ['kendra:*'],
@@ -186,6 +185,15 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
     roleKendra.attachInlinePolicy( // add kendra policy
       new iam.Policy(this, `kendra-inline-policy-for-${projectName}`, {
         statements: [kendraPolicy],
+      }),
+    );
+    const kendraLogPolicy = new iam.PolicyStatement({
+      resources: ['*'],
+      actions: ["logs:*", "cloudwatch:GenerateQuery"],
+    });
+    roleKendra.attachInlinePolicy( // add kendra policy
+      new iam.Policy(this, `kendra-log-policy-for-${projectName}`, {
+        statements: [kendraLogPolicy],
       }),
     );
 
