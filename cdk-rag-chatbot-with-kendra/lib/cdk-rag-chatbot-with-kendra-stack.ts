@@ -196,6 +196,15 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         statements: [kendraLogPolicy],
       }),
     );
+    const kendraS3ReadPolicy = new iam.PolicyStatement({
+        resources: ['*'],
+        actions: ["s3:Get*","s3:List*","s3:Describe*"],
+      });
+      roleKendra.attachInlinePolicy( // add kendra policy
+        new iam.Policy(this, `kendra-s3-read-policy-for-${projectName}`, {
+          statements: [kendraS3ReadPolicy],
+        }),
+      );   
 
     roleLambdaWebsocket.attachInlinePolicy(
       new iam.Policy(this, `lambda-inline-policy-for-kendra-in-${projectName}`, {
