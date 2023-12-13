@@ -104,7 +104,7 @@ memory_chain.chat_memory.add_ai_message(msg)
 
 RAG에 사용한 문서의 경로(URI)를 채팅화면에서 보여주면, 필요시 추가적인 정보를 쉽게 얻을 수 있으므로 사용성이 좋아집니다. 본 게시글의 실습에서는 CloudFront의 정적 저장소로 사용된 S3 Bucket에 파일을 업로드하므로, CloudFront의 도메인 주소와 파일명(key)을 이용하여 파일의 경로(URI)를 생성합니다. 이 경로는 문서 정보의 "source_uri"로 저장되어, 해당 문서가 관련 문서(Relevant Documents)로 사용될 때에 채팅 UI에 노출될 수 있습니다. 또한, 파일명("s3_file_name")에 공백이 있을 수 있으므로 URL Encoding을 하여야 하고, S3 Object의 파일 확장자를 추출하여 문서 타입을 정의합니다. 
 
-Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원하며, 문서의 크기는 최대 50MB입니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
+Kendra가 사용할 수 있는 [문서 타입](https://docs.aws.amazon.com/kendra/latest/dg/index-document-types.html)에는 HTML, XML, TXT, CSV, JSON 뿐 아니라, Excel, Word, PowerPoint를 지원합니다. Kendra에 문서를 등록할 때에 언어를 지정하면, 추후 문서 검색시에 언어별로 나누어 검색을 할 수 있습니다. 따라서, 아래에서는 파일 속성으로 "_language_code"를 "ko"로 설정한 후에, [batch_put_document()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)을 이용하여 문서를 S3에 업로드합니다.
 
 ```java
 from urllib import parse
