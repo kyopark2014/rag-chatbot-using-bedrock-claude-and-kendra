@@ -224,6 +224,11 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
       }),
     );
 
+    new cdk.CfnOutput(this, `create-S3-data-source-for-${projectName}`, {
+      value: 'aws kendra create-data-source --index-id '+kendraIndex+' --name data-source-for-upload-file --type S3 --role-arn '+roleLambdaWebsocket.roleArn+' --configuration \'{\"S3Configuration\":{\"BucketName\":\"'+s3Bucket.bucketName+'\", \"DocumentsMetadataConfiguration\": {\"S3Prefix\":\"metadata/\"},\"InclusionPrefixes\": [\"'+s3_prefix+'/\"]}}\' --language-code ko --region '+kendra_region,
+      description: 'The commend to create data source using S3',
+    });
+
     // api role
     const role = new iam.Role(this, `api-role-for-${projectName}`, {
       roleName: `api-role-for-${projectName}-${region}`,
