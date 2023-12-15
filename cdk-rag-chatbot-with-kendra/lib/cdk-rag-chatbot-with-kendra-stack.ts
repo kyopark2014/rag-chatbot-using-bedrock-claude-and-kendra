@@ -200,11 +200,11 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         resources: ['*'],
         actions: ["s3:Get*","s3:List*","s3:Describe*"],
       });
-      roleKendra.attachInlinePolicy( // add kendra policy
-        new iam.Policy(this, `kendra-s3-read-policy-for-${projectName}`, {
-          statements: [kendraS3ReadPolicy],
-        }),
-      );   
+    roleKendra.attachInlinePolicy( // add kendra policy
+      new iam.Policy(this, `kendra-s3-read-policy-for-${projectName}`, {
+        statements: [kendraS3ReadPolicy],
+      }),
+    );   
 
     roleLambdaWebsocket.attachInlinePolicy(
       new iam.Policy(this, `lambda-inline-policy-for-kendra-in-${projectName}`, {
@@ -497,7 +497,7 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
       }
     });
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    s3Bucket.grantRead(lambdaChatWebsocket); // permission for s3
+    s3Bucket.grantReadWrite(lambdaChatWebsocket); // permission for s3
     callLogDataTable.grantReadWriteData(lambdaChatWebsocket); // permission for dynamo 
 
     if (debug) {
