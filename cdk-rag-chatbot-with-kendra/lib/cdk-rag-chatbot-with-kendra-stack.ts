@@ -246,8 +246,6 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
     });
 
-    kendraIndex = cfnIndex.attrId;
-
     // API Gateway
     const api = new apiGateway.RestApi(this, `api-chatbot-for-${projectName}`, {
       description: 'API Gateway for chatbot',
