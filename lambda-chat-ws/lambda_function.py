@@ -1251,7 +1251,7 @@ def lambda_handler(event, context):
                                     
                 result = {
                     'request_id': requestId,
-                    'msg': msg,
+                    'msg': msg+reference,
                     'status': 'completed'
                 }
                 #print('result: ', json.dumps(result))
