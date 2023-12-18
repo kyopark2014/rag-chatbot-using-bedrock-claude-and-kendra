@@ -48,6 +48,7 @@ kendraIndex = os.environ.get('kendraIndex')
 roleArn = os.environ.get('roleArn')
 numberOfRelevantDocs = os.environ.get('numberOfRelevantDocs', '10')
 top_k = int(numberOfRelevantDocs)
+MSG_LENGTH = 100
 
 # websocket
 connection_url = os.environ.get('connection_url')
@@ -392,13 +393,13 @@ def load_chat_history(userId, allowTime, convType):
 
             if convType=='qa':
                 memory_chain.chat_memory.add_user_message(text)
-                if len(msg) > 200:
+                if len(msg) > MSG_LENGTH:
                     memory_chain.chat_memory.add_ai_message(msg)        
                 else:
-                    memory_chain.chat_memory.add_ai_message(msg[:200])                       
+                    memory_chain.chat_memory.add_ai_message(msg[:MSG_LENGTH])                       
             else:
-                if len(msg) > 200:
-                    memory_chat.save_context({"input": text}, {"output": msg[:200]})
+                if len(msg) > MSG_LENGTH:
+                    memory_chat.save_context({"input": text}, {"output": msg[:MSG_LENGTH]})
                 else:
                     memory_chat.save_context({"input": text}, {"output": msg})
                 
@@ -444,8 +445,8 @@ def extract_chat_history_from_memory():
     for dialogue_turn in chats['chat_history']:
         role_prefix = _ROLE_MAP.get(dialogue_turn.type, f"{dialogue_turn.type}: ")
         history = f"{role_prefix[2:]}{dialogue_turn.content}"
-        if len(history)>200:
-            chat_history.append(history[:200])
+        if len(history)>MSG_LENGTH:
+            chat_history.append(history[:MSG_LENGTH])
         else:
             chat_history.append(history)
 
@@ -889,6 +890,7 @@ def create_ConversationalRetrievalChain(PROMPT, retriever):
     return qa
 
 def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):    
+    reference = ""
     if rag_method == 'RetrievalQA': # RetrievalQA
         revised_question = get_revised_question(connectionId, requestId, text) # generate new prompt using chat history
         print('revised_question: ', revised_question)
@@ -915,7 +917,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         print('source_documents: ', source_documents)
 
         if len(source_documents)>=1 and enableReference=='true':
-            msg = msg+get_reference(source_documents, rag_method, rag_type)    
+            reference = get_reference(source_documents, rag_method, rag_type)    
 
     elif rag_method == 'ConversationalRetrievalChain': # ConversationalRetrievalChain
         PROMPT = get_prompt_template(text, convType)
@@ -930,7 +932,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
         print('source_documents: ', result['source_documents']) 
 
         if len(result['source_documents'])>=1 and enableReference=='true':
-            msg = msg+get_reference(result['source_documents'], rag_method, rag_type)
+            reference = get_reference(result['source_documents'], rag_method, rag_type)
     
     elif rag_method == 'RetrievalPrompt': # RetrievalPrompt
         revised_question = get_revised_question(connectionId, requestId, text) # generate new prompt using chat history
@@ -960,7 +962,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
             raise Exception ("Not able to request to LLM")    
 
         if len(relevant_docs)>=1 and enableReference=='true':
-            msg = msg+get_reference(relevant_docs, rag_method, rag_type)
+            reference = get_reference(relevant_docs, rag_method, rag_type)
 
 
     if isDebugging==True:   # extract chat history for debug
@@ -970,8 +972,7 @@ def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):
     memory_chain.chat_memory.add_user_message(text)  # append new diaglog
     memory_chain.chat_memory.add_ai_message(msg)
     
-
-    return msg
+    return msg, reference
 
 def get_answer_from_conversation(text, conversation, convType, connectionId, requestId):
     conversation.prompt = get_prompt_template(text, convType)
@@ -1136,7 +1137,7 @@ def getResponse(connectionId, jsonBody):
             else:          
                 if convType == 'qa':   # question & answering
                     print(f'rag_type: {rag_type}, rag_method: {rag_method}')                          
-                    msg = get_answer_using_RAG(text, rag_type, convType, connectionId, requestId)                     
+                    msg, reference = get_answer_using_RAG(text, rag_type, convType, connectionId, requestId)                     
                 else: # general conversation
                     msg = get_answer_from_conversation(text, conversation, convType, connectionId, requestId)
                 
@@ -1178,7 +1179,6 @@ def getResponse(connectionId, jsonBody):
                 msg = "uploaded file: "+object
                                 
             if convType == 'qa':                
-                start_time = time.time()
                 category = "upload"
                 documentId = category + "-" + object
                 
@@ -1190,9 +1190,8 @@ def getResponse(connectionId, jsonBody):
                 create_metadata(bucket=s3_bucket, key=object, meta_prefix=meta_prefix, s3_prefix=s3_prefix, uri=path+parse.quote(object), category=category, documentId=documentId)
                                                                 
         elapsed_time = int(time.time()) - start
-        print("total run time(sec): ", elapsed_time)
-        
-        print('msg: ', msg)
+        print("total run time(sec): ", elapsed_time)        
+        # print('msg+reference: ', msg+reference)
 
         item = {
             'user_id': {'S':userId},
@@ -1200,7 +1199,7 @@ def getResponse(connectionId, jsonBody):
             'request_time': {'S':requestTime},
             'type': {'S':type},
             'body': {'S':body},
-            'msg': {'S':msg}
+            'msg': {'S':msg+reference}
         }
         client = boto3.client('dynamodb')
         try:
@@ -1211,7 +1210,7 @@ def getResponse(connectionId, jsonBody):
             raise Exception ("Not able to write into dynamodb")        
         #print('resp, ', resp)
 
-    return msg
+    return msg, reference
 
 def lambda_handler(event, context):
     # print('event: ', event)
@@ -1240,7 +1239,9 @@ def lambda_handler(event, context):
 
                 requestId  = jsonBody['request_id']
                 try:
-                    msg = getResponse(connectionId, jsonBody)
+                    msg, reference = getResponse(connectionId, jsonBody)
+
+                    print('msg+reference: ', msg+reference)
                 except Exception:
                     err_msg = traceback.format_exc()
                     print('err_msg: ', err_msg)
