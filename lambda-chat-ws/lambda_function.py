@@ -1056,6 +1056,7 @@ def getResponse(connectionId, jsonBody):
     global llm, modelId, enableReference, rag_type, conversation
     global parameters, map_chain, map_chat, memory_chat, memory_chain, debugMessageMode
     
+    reference = ""
     if "rag_type" in jsonBody:
         rag_type = jsonBody['rag_type']  # RAG type
         print('rag_type: ', rag_type)
