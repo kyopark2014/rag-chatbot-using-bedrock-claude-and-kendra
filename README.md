@@ -1,4 +1,4 @@
-# Amazon Bedrock의 Claude와 Amazon Kendra로 향상된 RAG 사용하기
+![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/4c81bc78-627f-45ac-898b-2d66ce330498)# Amazon Bedrock의 Claude와 Amazon Kendra로 향상된 RAG 사용하기
 
 [Amazon Bedrock의 Claude LLM v2.1](https://aws.amazon.com/ko/about-aws/whats-new/2023/11/claude-2-1-foundation-model-anthropic-amazon-bedrock/)은 200k token을 가지는 Context Window를 제공하고, 환각(Hallucination) 방지에서도 높은 성능을 보여주고 있습니다. 또한, [Amazon Q](https://aws.amazon.com/ko/blogs/aws/introducing-amazon-q-a-new-generative-ai-powered-assistant-preview/)에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)과 [Amazon Kendra](https://aws.amazon.com/ko/kendra/)을 이용하여 다양한 데이터 소스를 통합하여 업무를 간소화하고, 빠른 의사결정 및 문제점 해결이 가능하도록, 즉각적이고 관련성 있는 정보와 조언을 제공하고 있습니다. 본 게시글에서는 Amazon Bedrock의 Claude LLM과 Amazon Kendra를 사용하여 RAG가 적용된 한국어 Chatbot을 만드는 것을 설명합니다. LLM과 어플리케이션의 인터페이스는 [LangChain](https://www.langchain.com/)을 이용하며, Kendra에서 제공하는 정보를 최대한 활용하여 [RAG (Retrieval Augmented Generation)](https://docs.aws.amazon.com/ko_kr/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html)의 성능을 향상시킵니다. 이를 통해, 오픈된 개발환경에서, 기업의 데이터를 안전하고 효율적으로 사용하는 한국어 Chatbot을 만들수 있습니다. 
 
@@ -528,11 +528,13 @@ def get_reference(docs):
 ![image](./images/result_banking.png)
 
 
-RAG에 문서 추가시 동작을 확인하기 위하여, [보일러 에러코드 (pdf)](./contents/error_code.pdf) 파일을 다운로드 한 후에, 채팅 화면 하단의 파일 아이콘을 선택하여 업로드합니다. 이후 채팅창에 "우리집 보일러가 고장났나봐요. A491이라는 에러가 나오는데 어떻게 해야할까요?"라고 입력한 후에 결과를 확인합니다.
+From의 “FAQ (VERY_HIGH)”를 선택하면, Kendra로 부터 얻은 FAQ의 값을 확인할 수 있습니다. FAQ는 Query API로 조회하므로 길이 제한이 있습니다. 따라서, 가능한 100 단어 이하로 FAQ를 구성하는 것이 좋습니다.  만약 FAQ의 값이 100단어 이상이라면, 일반 문서로 한번 더 등록하여 Retrieve API를 활용하는 것이 좋습니다. faq-banking.csv을 선택한 후, 오른쪽 다운로드 아이콘을 선택하여 파일을 다운로드 합니다. 이후 채팅 화면 하단의 파일 아이콘을 선택하여 업로드합니다. 이전에 입력했던 "남서울은행의 수퍼 정기 예금에 대해 설명해주세요."를 다시 입력하면, 아래와 같이 좀더 많은 정보를 제공합니다. 
 
-![image](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/a204e83f-94be-44a8-89f8-9fa7d5c269bf)
+![result2_kendra](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/88af4970-cac5-48d1-9222-09b31e10419e)
 
-대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다. 만약 결과 메시지 하단에 참고 자료 링크 보여지지 않는다면, Kendra의 index 작업이 끝나지 않은것이므로, 수분후에 다시 시도합니다.
+
+대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다. 만약 결과 메시지 하단에 참고 자료 링크 보여지지 않는다면, Kendra의 index작업이 끝나지 않은 것이므로, 수분후에 다시 시도합니다.
+
 
 ## 리소스 정리하기 
 
