@@ -86,7 +86,7 @@ cdk deploy --all
 
 Kendra console의 [FAQs]에 접속하면 아래와 같이 "FAQ_banking"로 Sample FAQ가 등록된것을 확인할 수 있습니다.
 
-![noname](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/93d8da15-5f2d-4122-a9b2-5aa1e03ddd09)
+![faq_kendra](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/7760757c-fd42-4cca-81ae-aec14a824afb)
 
 
 10) Output의 WebUrlforragchatbotwithkendra에 있는 URL을 복사하여 웹브라우저로 접속합니다. User Id로 적당한 이름을 넣고, Conversation Type으로는 "2. Question/Answering (RAG-Kendra)"를 선택합니다.
