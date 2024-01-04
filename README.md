@@ -530,13 +530,12 @@ def get_reference(docs):
 
 From의 “FAQ (VERY_HIGH)”를 선택하면, Kendra로 부터 얻은 FAQ의 값을 확인할 수 있습니다. FAQ는 Query API로 조회하므로 길이 제한이 있습니다. 따라서, 가능한 100 단어 이하로 FAQ를 구성하는 것이 좋습니다.  만약 FAQ의 값이 100단어 이상이라면, 일반 문서로 한번 더 등록하여 Retrieve API를 활용하는 것이 좋습니다. faq-banking.csv을 선택한 후, 오른쪽 다운로드 아이콘을 선택하여 파일을 다운로드 합니다. 이후 채팅 화면 하단의 파일 아이콘을 선택하여 업로드합니다. 이전에 입력했던 "남서울은행의 수퍼 정기 예금에 대해 설명해주세요."를 다시 입력하면, 아래와 같이 좀더 많은 정보를 제공합니다. 
 
-![image](./images/result_banking2.png)
+![result_banking2](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5b000c3c-6813-4021-ae44-be680916799d)
+
 
 
 대용량 언어 모델(LLM)의 특성상 실습의 답변은 상기 화면과 조금 다를 수 있습니다. 만약 결과 메시지 하단에 참고 자료 링크 보여지지 않는다면, Kendra의 index작업이 끝나지 않은 것이므로, 수분후에 다시 시도합니다.
 
-
-![result_banking2](https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5b000c3c-6813-4021-ae44-be680916799d)
 
 
 
