@@ -1,4 +1,4 @@
-# Amazon Bedrock의 Claude와 Amazon Kendra를 이용하여 RAG가 적용된 Chatbot 만들기
+# Amazon Bedrock의 Claude와 Amazon Kendra로 향상된 RAG 사용하기
 
 [Amazon Bedrock의 Claude LLM v2.1](https://aws.amazon.com/ko/about-aws/whats-new/2023/11/claude-2-1-foundation-model-anthropic-amazon-bedrock/)은 200k token을 가지는 Context Window를 제공하고, 환각(Hallucination) 방지에서도 높은 성능을 보여주고 있습니다. 또한, [Amazon Q](https://aws.amazon.com/ko/blogs/aws/introducing-amazon-q-a-new-generative-ai-powered-assistant-preview/)에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)과 [Amazon Kendra](https://aws.amazon.com/ko/kendra/)을 이용하여 다양한 데이터 소스를 통합하여 업무를 간소화하고, 빠른 의사결정 및 문제점 해결이 가능하도록, 즉각적이고 관련성 있는 정보와 조언을 제공하고 있습니다. 본 게시글에서는 Amazon Bedrock의 Claude LLM과 Amazon Kendra를 사용하여 RAG가 적용된 한국어 Chatbot을 만드는 것을 설명합니다. LLM과 어플리케이션의 인터페이스는 [LangChain](https://www.langchain.com/)을 이용하며, Kendra에서 제공하는 정보를 최대한 활용하여 [RAG (Retrieval Augmented Generation)](https://docs.aws.amazon.com/ko_kr/sagemaker/latest/dg/jumpstart-foundation-models-customize-rag.html)의 성능을 향상시킵니다. 이를 통해, 오픈된 개발환경에서, 기업의 데이터를 안전하고 효율적으로 사용하는 한국어 Chatbot을 만들수 있습니다. 
 
