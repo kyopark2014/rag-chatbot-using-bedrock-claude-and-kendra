@@ -25,7 +25,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 
 아래에서는 상기의 동작을 Sequence Diagram으로 상세하게 설명하였습니다.
 
-<img src="../images/signal_flow.png" width="1000">
+<img src="./images/signal_flow.png" width="1000">
 
 ## 주요 시스템 구성
 
