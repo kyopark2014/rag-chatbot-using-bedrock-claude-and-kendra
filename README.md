@@ -25,7 +25,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 
 아래에서는 상기의 동작을 Sequence Diagram으로 상세하게 설명하였습니다.
 
-<img src="https://github.com/kyopark2014/rag-chatbot-using-bedrock-claude-and-kendra/assets/52392004/5ec32908-823b-47ea-baef-fbfba2ef240b" width="1000">
+<img src="../images/signal_flow.png" width="1000">
 
 ## 주요 시스템 구성
 
