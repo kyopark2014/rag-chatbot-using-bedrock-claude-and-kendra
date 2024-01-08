@@ -807,6 +807,8 @@ def get_reference(docs, rag_method, rag_type):
     elif rag_method == 'RetrievalPrompt':
         reference = "\n\nFrom\n"
         for i, doc in enumerate(docs):
+            excerpt = str(doc['metadata']['excerpt']).replace('"'," ")
+            
             if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
                     uri = doc['metadata']['source']
                     name = doc['metadata']['title']
@@ -815,7 +817,7 @@ def get_reference(docs, rag_method, rag_type):
                 confidence = doc['confidence']
                 if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
                     excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
-                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
+                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
                 else:
                     uri = ""
                     if "title" in doc['metadata']:
@@ -830,9 +832,9 @@ def get_reference(docs, rag_method, rag_type):
                             page = doc['metadata']['document_attributes']['_excerpt_page_number']
                                                 
                     if page: 
-                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
                     elif uri:
-                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
         
     return reference
 
