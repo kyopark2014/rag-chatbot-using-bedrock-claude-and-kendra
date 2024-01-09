@@ -581,6 +581,7 @@ def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
                         "_excerpt_page_number": page
                     }
                 },
+                "assessed_score": "",
                 "query_id": query_id,
                 "feedback_token": feedback_token
             }
@@ -596,6 +597,7 @@ def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
                     "title": document_title,
                     "excerpt": excerpt,
                 },
+                "assessed_score": "",
                 "query_id": query_id,
                 "feedback_token": feedback_token
             }
@@ -778,10 +780,12 @@ def check_confidence(query, relevant_docs):
 
         order = document[0].metadata['order']
         name = document[0].metadata['name']
-        confidence = document[1]
-        print(f"{order} {name}: {confidence}")
+        assessed_score = document[1]
+        print(f"{order} {name}: {assessed_score}")
+        
+        relevant_docs[order]['assessed_score'] = int(assessed_score)
 
-        if confidence < 200:
+        if assessed_score < 200:
             docs.append(relevant_docs[order])
     
     # print('selected docs: ', docs)
@@ -812,7 +816,7 @@ def get_reference(docs, rag_method, rag_type):
             if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
                     uri = doc['metadata']['source']
                     name = doc['metadata']['title']
-                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
             else: # Query
                 confidence = doc['confidence']
                 if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
@@ -832,9 +836,9 @@ def get_reference(docs, rag_method, rag_type):
                             page = doc['metadata']['document_attributes']['_excerpt_page_number']
                                                 
                     if page: 
-                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
                     elif uri:
-                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
         
     return reference
 
