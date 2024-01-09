@@ -812,12 +812,12 @@ def get_reference(docs, rag_method, rag_type):
             if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
                     uri = doc['metadata']['source']
                     name = doc['metadata']['title']
-                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>\n"
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
             else: # Query
                 confidence = doc['confidence']
                 if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
                     excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
-                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
                 else:
                     uri = ""
                     if "title" in doc['metadata']:
