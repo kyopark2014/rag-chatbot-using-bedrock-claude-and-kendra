@@ -36,7 +36,7 @@ Kendra는 자연어 검색을 통해 RAG에 필요한 관련된 문서들(Releva
 [lambda-chat](./lambda-chat-ws/lambda_function.py)와 같이 Langchain으로 Bedrock을 정의할때, 아래와 같이 사용 리전을 설정하고, Anthropic의 Claude V2.1을 LLM으로 설정합니다. Stream 설정 및 WebSocket API 구현과 관련해서는 [Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기](https://aws.amazon.com/ko/blogs/tech/stream-chatbot-for-amazon-bedrock/)을 참조합니다.
 
 ```python
-modelId = 'anthropic.claude-v2:1’
+modelId = 'anthropic.claude-3-sonnet-20240229-v1:0’
 bedrock_region = "us-west-2" 
 
 boto3_bedrock = boto3.client(
@@ -51,24 +51,22 @@ boto3_bedrock = boto3.client(
 
 HUMAN_PROMPT = "\n\nHuman:"
 AI_PROMPT = "\n\nAssistant:"
-def get_parameter(modelId):
-    if modelId == 'anthropic.claude-v2:1':
-        return {
-            "max_tokens_to_sample":8191, # 8k
-            "temperature":0.1,
-            "top_k":250,
-            "top_p":0.9,
-            "stop_sequences": [HUMAN_PROMPT]            
-        }
-parameters = get_parameter(modelId)
+parameters = {
+    "max_tokens":8196,     
+    "temperature":0.1,
+    "top_k":250,
+    "top_p":0.9,
+    "stop_sequences": [HUMAN_PROMPT]
+}
 
-from langchain.llms.bedrock import Bedrock
-llm = Bedrock(
-    model_id=modelId, 
+from langchain_community.chat_models import BedrockChat
+chat = BedrockChat(
+    model_id=modelId,
     client=boto3_bedrock, 
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
-    model_kwargs=parameters)
+    model_kwargs=parameters,
+)   
 ```
 
 ### Kendra 준비
@@ -81,7 +79,7 @@ AWS CDK를 이용하여 [Kendra 사용을 위한 준비](./kendra-preperation.md
 사용자별로 대화이력을 관리하기 위하여 아래와 같이 map_chain을 정의합니다. 클라이언트의 요청이 Lambda에 event로 전달되면, event의 body에서 사용자 ID(user_id)를 추출하여 관련 대화이력을 가진 메모리 맵(map_chain)을 찾습니다. 기존 대화이력이 메모리 맵에 있다면 재활용하고, 없다면 아래와 같이 [ConversationBufferWindowMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer_window.ConversationBufferWindowMemory.html)을 이용하여 새로 정의합니다. 상세한 코드는 [lambda-chat](./lambda-chat-ws/lambda_function.py)을 참고합니다.
 
 ```python
-map_chain = dict()
+map_chain = dict() 
 
 jsonBody = json.loads(event.get("body"))
 userId  = jsonBody['user_id']
@@ -89,8 +87,36 @@ userId  = jsonBody['user_id']
 if userId in map_chain:
     memory_chain = map_chain[userId]
 else
-    memory_chain = ConversationBufferWindowMemory(memory_key="chat_history",output_key='answer',return_messages=True,k=5)
+    print('memory does not exist. create new one!')
+    memory_chain = ConversationBufferWindowMemory(memory_key="chat_history", output_key='answer', return_messages=True, k=10)
     map_chain[userId] = memory_chain
+        
+    allowTime = getAllowTime()
+    load_chat_history(userId, allowTime)
+
+def load_chat_history(userId, allowTime):
+    dynamodb_client = boto3.client('dynamodb')
+
+    response = dynamodb_client.query(
+        TableName=callLogTableName,
+        KeyConditionExpression='user_id = :userId AND request_time > :allowTime',
+        ExpressionAttributeValues={
+            ':userId': {'S': userId},
+            ':allowTime': {'S': allowTime}
+        }
+    )
+
+    for item in response['Items']:
+        text = item['body']['S']
+        msg = item['msg']['S']
+        type = item['type']['S']
+
+        if type == 'text':
+            memory_chain.chat_memory.add_user_message(text)
+            if len(msg) > MSG_LENGTH:
+                memory_chain.chat_memory.add_ai_message(msg[:MSG_LENGTH])                          
+            else:
+                memory_chain.chat_memory.add_ai_message(msg) 
 ```
 
 LLM으로 부터 질문에 대한 답변을 얻으면, 아래와 같이 memory_chain에 새로운 dialog로 저장합니다.
@@ -228,13 +254,6 @@ Kendra의 FAQ로 질문을 하려면, Query API를 이용하여야 합니다. �
 상기의 FAQ 예제에서 "How many free clinics are in Spokane WA?"의 답변은 "13"이었습니다. 그런데, 사용자가 Kendra에 "How many clinics are in Spokane WA?"와 같이 "free"를 빼고 질문하면 완전히 다른 질문이 됩니다. 하지만, Kendra는 FAQ에서 가장 유사한 항목을 찾아서 답변으로 전달하므로, "free"를 빼고 질문하였을 때에 "13"이라는 잘못된 답변을 "VERY_HIGH"와 같은 신뢰도로 응답할 수 있습니다. 따라서, FAQ를 검색한 결과를 그대로 사용하지 않고, "How many free clinics are in Spokane WA? 13"와 같이 하나의 문장으로 만들어서, RAG에서 참조하는 관련 문서(Relevant Documents)로 사용하여야 합니다. 또한, Kendra의 FAQ는 Query API를 이용하므로, FAQ의 Answer가 길 경우에, 앞부분만 참조될 수 있습니다. 따라서, FAQ 문서를 Kendra의 Data Source에 추가로 등록하여 전체가 참고될 수 있도록 합니다. 
 
 
-### LangChain의 활용
-
-LangChain의 [RetrievalQA](https://api.python.langchain.com/en/latest/chains/langchain.chains.retrieval_qa.base.RetrievalQA.html?highlight=retrievalqa#)와 [ConversationalRetrievalChain](https://api.python.langchain.com/en/latest/chains/langchain.chains.conversational_retrieval.base.ConversationalRetrievalChain.html#)은 [kendra retriever](https://api.python.langchain.com/en/latest/retrievers/langchain_community.retrievers.kendra.AmazonKendraRetriever.html?highlight=kendra%20retriever#)를 이용하여 편리하게 RAG를 사용할 수 있도록 도와줍니다. 만약, RetrievalQA나 ConversationalRetrievalChain을 사용하기를 원할 경우에는 아래와 같이 [cdk-rag-chatbot-with-kendra-stack.ts](./cdk-rag-chatbot-with-kendra/lib/cdk-rag-chatbot-with-kendra-stack.ts)에서 rag_method를 변경하여 사용할 수 있습니다. 반면에 rag_method을 RetrievalPrompt로 설정하면, kendra retriever를 직접 구현하게 되는데, Kendra의 FAQ와 ScoreAttributes를 추가로 활용하여 RAG의 정확도를 높일 수 있습니다. 이때에는 [Kendra API를 boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kendra.html)로 직접 조회하고, Prompt를 이용해 RAG을 구현하게 됩니다. 
-
-```typescript
-const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
-```
 
 ### Kendra에서 문서 조회하기
 
@@ -326,7 +345,7 @@ if len(resp["ResultItems"]) >= 1:
         break
 ```
 
-Retrieve API의 경우에 "ScoreAttributes"를 2023년 12월(현재)에는 영어만 제공하고 있으므로 한국어에 대해서 검색범위를 제한할 수 없습니다. 따라서, 아래와 같이 [In-memory 방식 Faiss VectoreStore](https://python.langchain.com/docs/integrations/vectorstores/faiss)의 similarity search를 이용하여 관련이 없는 문서는 제외하였습니다. 이것은 Embedding과 Vector Store에 대한 검색을 필요로 하므로, 추후 Kendra에서 한국어에 대해 "ScoreAttributes"를 지원하게 되면 제외할 수 있습니다.
+Retrieve API의 경우에 "ScoreAttributes"를 2024년 3월(현재)까지 한국어를 지원하지 않고 있습니다. 따라서, 아래와 같이 [In-memory 방식 Faiss VectoreStore](https://python.langchain.com/docs/integrations/vectorstores/faiss)의 similarity search를 이용하여 관련이 없는 문서는 제외하였습니다. 이것은 Embedding과 Vector Store에 대한 검색을 필요로 하므로, 추후 Kendra에서 한국어에 대해 "ScoreAttributes"를 지원하게 되면 제외할 수 있습니다.
 
 ```python
 def check_confidence(query, relevant_docs):
@@ -381,45 +400,66 @@ def check_confidence(query, relevant_docs):
 채팅화면에서의 대화는 Human과 Assistant가 상호작용(interaction)을 할 수 있어야 하므로, 현재의 질문을 그대로 사용하지 않고, 채팅 이력을 참조하여 새로운 질문으로 업데이트하여야 합니다. 아래에서는 chat_history로 전달되는 이전 대화 이력을 활용하여, 새로운 질문(revised_question)을 생성하고 있습니다. 또한, 질문이 한국어/영어 인지를 확인하여 다른 Prompt를 사용합니다.
 
 ```python
-def get_revised_question(connectionId, requestId, query):        
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')  # check korean
-    word_kor = pattern_hangul.search(str(query))
-
-    if word_kor and word_kor != 'None':
-        condense_template = """
-        <history>
-        {chat_history}
-        </history>
-
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 생성하세요.
-
+def revise_question(connectionId, requestId, chat, query):    
+    global history_length, token_counter_history    
+    history_length = token_counter_history = 0
+        
+    if isKorean(query)==True :      
+        system = (
+            ""
+        )  
+        human = """이전 대화를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. 새로운 질문은 원래 질문의 중요한 단어를 반드시 포함합니다. 결과는 <result> tag를 붙여주세요.
+        
         <question>            
         {question}
-        </question>
-            
-        Assistant: 새로운 질문:"""
+        </question>"""
+        
     else: 
-        condense_template = """
-        <history>
-        {chat_history}
-        </history>
-        Answer only with the new question.
-
-        Human: using <history>, rephrase the follow up <question> to be a standalone question.
-         
-        <quesion>
+        system = (
+            ""
+        )
+        human = """Rephrase the follow up <question> to be a standalone question. Put it in <result> tags.
+        <question>            
         {question}
-        </question>
-
-        Assistant: Standalone question:"""
-
-    condense_prompt_claude = PromptTemplate.from_template(condense_template)        
-    condense_prompt_chain = LLMChain(llm=llm, prompt=condense_prompt_claude)
-
-    chat_history = extract_chat_history_from_memory()
-    revised_question = condense_prompt_chain.run({"chat_history": chat_history, "question": query})
+        </question>"""
+            
+    prompt = ChatPromptTemplate.from_messages([("system", system), MessagesPlaceholder(variable_name="history"), ("human", human)])
     
-    return revised_question
+    history = memory_chain.load_memory_variables({})["chat_history"]
+                
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "history": history,
+                "question": query,
+            }
+        )
+        generated_question = result.content
+        
+        revised_question = generated_question[generated_question.find('<result>')+8:len(generated_question)-9] # remove <result> tag                   
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+            
+        sendErrorMessage(connectionId, requestId, err_msg)    
+        raise Exception ("Not able to request to LLM")
+
+    if debugMessageMode == 'true':  
+        chat_history = ""
+        for dialogue_turn in history:
+            dialog = f"{dialogue_turn.type}: {dialogue_turn.content}\n"            
+            chat_history = chat_history + dialog
+                
+        history_length = len(chat_history)
+        
+        token_counter_history = 0
+        if chat_history:
+            token_counter_history = chat.get_num_tokens(chat_history)
+            
+        sendDebugMessage(connectionId, requestId, f"새로운 질문: {revised_question}\n * 대화이력({str(history_length)}자, {token_counter_history} Tokens)을 활용하였습니다.")
+            
+    return revised_question    
 ```    
 
 ### RAG를 이용한 결과 확인하기
@@ -433,58 +473,66 @@ relevant_context = ""
 for document in relevant_docs:
     relevant_context = relevant_context + document['metadata']['excerpt'] + "\n\n"
 
-PROMPT = get_prompt_template(revised_question, convType)
-def get_prompt_template(query, convType):
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
-    word_kor = pattern_hangul.search(str(query))
+msg = query_using_RAG_context(connectionId, requestId, chat, relevant_context, revised_question)
 
-    if word_kor and word_kor != 'None':
-        prompt_template = """\n\nHuman: 다음의 <context>를 참조하여 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
-        
-        <context>
-        {context}
-        </context>
-
-        <question>
-        {question}
-        </question>
-
-        Assistant:"""
-                
-    else:  
-        prompt_template = """\n\nHuman: Here is pieces of context, contained in <context> tags. Provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer. 
+def query_using_RAG_context(connectionId, requestId, chat, context, revised_question):    
+    if isKorean(revised_question)==True:
+        system = (
+            """다음의 <context> tag안의 참고자료를 이용하여 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
             
-        <context>
-        {context}
-        </context>
-                        
-        <question>
-        {question}
-        </question>
+            <context>
+            {context}
+            </context>"""
+        )
+    else: 
+        system = (
+            """Here is pieces of context, contained in <context> tags. Provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+            
+            <context>
+            {context}
+            </context>"""
+        )
+    
+    human = "{input}"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+                   
+    chain = prompt | chat
+    
+    try: 
+        isTyping(connectionId, requestId)  
+        stream = chain.invoke(
+            {
+                "context": context,
+                "input": revised_question,
+            }
+        )
+        msg = readStreamMsg(connectionId, requestId, stream.content)    
+        print('msg: ', msg)
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)        
+            
+        sendErrorMessage(connectionId, requestId, err_msg)    
+        raise Exception ("Not able to request to LLM")
 
-        Assistant:"""
-return PromptTemplate.from_template(prompt_template)
+    return msg
 ```
 
 Prompt를 이용하여 관련된 문서를 context로 제공하고 새로운 질문(revised_question)을 전달한 후에 응답을 확인합니다. 관련된 문서(relevant_docs)에서 "title", "_excerpt_page_number", "source"를 추출하여 reference로 추가합니다. 이때 FAQ의 경우는 문서 원본을 URI로 제공할 수 없으므로 아래와 같이 alert으로 FAQ의 quetion/answer 정보를 화면에 보여줍니다. 
 
 ```python
-try: 
-    stream = llm(PROMPT.format(context=relevant_context, question=revised_question))
-    msg = readStreamMsg(connectionId, requestId, stream)
-except Exception:
-    raise Exception ("Not able to request to LLM")    
-
-if len(relevant_docs)>=1 and enableReference=='true':
-    msg = msg+get_reference(relevant_docs)
-
-def get_reference(docs):
+def get_reference(docs, rag_type):
     reference = "\n\nFrom\n"
     for i, doc in enumerate(docs):
+        excerpt = str(doc['metadata']['excerpt']).replace('"'," ")
+            
         if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
             uri = doc['metadata']['source']
             name = doc['metadata']['title']
-            reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} </a>\n"
+            reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
         else: # Query
             confidence = doc['confidence']
             if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
@@ -493,6 +541,7 @@ def get_reference(docs):
             else:
                 uri = ""
                 if "title" in doc['metadata']:
+                    #print('metadata: ', json.dumps(doc['metadata']))
                     name = doc['metadata']['title']
                     if name: 
                         uri = path+parse.quote(name)
@@ -501,12 +550,11 @@ def get_reference(docs):
                 if "document_attributes" in doc['metadata']:
                     if "_excerpt_page_number" in doc['metadata']['document_attributes']:
                         page = doc['metadata']['document_attributes']['_excerpt_page_number']
-                                        
+                                                
                 if page: 
-                    reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({confidence})</a>\n"
+                    reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
                 elif uri:
-                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({confidence})</a>\n"        
-    return reference
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
 ```
 
 ## 직접 실습 해보기
