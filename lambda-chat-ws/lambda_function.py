@@ -1091,7 +1091,10 @@ def getResponse(connectionId, jsonBody):
                     msg = general_conversation(connectionId, requestId, chat, text)   
                 elif convType == 'qa':   # question & answering
                     print(f'rag_type: {rag_type}')                          
-                    msg, reference = get_answer_using_RAG(text, rag_type, connectionId, requestId)                     
+                    msg, reference = get_answer_using_RAG(text, rag_type, connectionId, requestId)
+                    
+                memory_chain.chat_memory.add_user_message(text)
+                memory_chain.chat_memory.add_ai_message(msg)               
                 
         elif type == 'document':
             object = body
@@ -1165,9 +1168,6 @@ def getResponse(connectionId, jsonBody):
             print('error message: ', err_msg)
             raise Exception ("Not able to write into dynamodb")        
         #print('resp, ', resp)
-        
-        memory_chain.chat_memory.add_user_message(text)
-        memory_chain.chat_memory.add_ai_message(msg)
 
     return msg, reference
 
