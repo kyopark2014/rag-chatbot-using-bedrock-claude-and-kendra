@@ -14,15 +14,10 @@ from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
-from langchain.llms.bedrock import Bedrock
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from botocore.config import Config
 
-from langchain.chains import RetrievalQA
-from langchain.chains import LLMChain
 from langchain.retrievers import AmazonKendraRetriever
 from langchain.chains import ConversationalRetrievalChain
 
@@ -43,7 +38,6 @@ modelId = os.environ.get('model_id', 'anthropic.claude-v2:1')
 print('model_id: ', modelId)
 isDebugging = False
 rag_type = os.environ.get('rag_type', 'kendra')
-rag_method = os.environ.get('rag_method', 'RetrievalPrompt') # RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
 
 enableReference = os.environ.get('enableReference', 'false')
 debugMessageMode = os.environ.get('debugMessageMode', 'false')
@@ -398,43 +392,41 @@ def load_csv_document(s3_file_name):
 
     return docs
 
-def get_summary(texts):    
-    # check korean
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+') 
-    word_kor = pattern_hangul.search(str(texts))
-    print('word_kor: ', word_kor)
+def get_summary(chat, docs):    
+    text = ""
+    for doc in docs:
+        text = text + doc
     
-    if word_kor:
-        #prompt_template = """\n\nHuman: 다음 텍스트를 간결하게 요약하세오. 텍스트의 요점을 다루는 글머리 기호로 응답을 반환합니다.
-        prompt_template = """\n\nHuman: 다음 텍스트를 요약해서 500자 이내로 설명하세오.
-
-        {text}
-        
-        Assistant:"""        
-    else:         
-        prompt_template = """\n\nHuman: Write a concise summary of the following:
-
-        {text}
-        
-        Assistant:"""
+    if isKorean(text)==True:
+        system = (
+            "다음의 <article> tag안의 문장을 요약해서 500자 이내로 설명하세오."
+        )
+    else: 
+        system = (
+            "Here is pieces of article, contained in <article> tags. Write a concise summary within 500 characters."
+        )
     
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
-    chain = load_summarize_chain(llm, chain_type="stuff", prompt=PROMPT)
-
-    docs = [
-        Document(
-            page_content=t
-        ) for t in texts[:5]
-    ]
-    summary = chain.run(docs)
-    print('summary: ', summary)
-
-    if summary == '':  # error notification
-        summary = 'Fail to summarize the document. Try agan...'
-        return summary
-    else:
-        # return summary[1:len(summary)-1]   
-        return summary
+    human = "<article>{text}</article>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )
+        
+        summary = result.content
+        print('result of summarization: ', summary)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return summary
     
 def load_chat_history(userId, allowTime):
     dynamodb_client = boto3.client('dynamodb')
@@ -493,22 +485,6 @@ def readStreamMsg(connectionId, requestId, stream):
             sendMessage(connectionId, result)
     # print('msg: ', msg)
     return msg
-
-_ROLE_MAP = {"human": "\n\nHuman: ", "ai": "\n\nAssistant: "}
-def extract_chat_history_from_memory():
-    chat_history = []
-    chats = memory_chain.load_memory_variables({})    
-    # print('chats: ', chats)
-
-    for dialogue_turn in chats['chat_history']:
-        role_prefix = _ROLE_MAP.get(dialogue_turn.type, f"{dialogue_turn.type}: ")
-        history = f"{role_prefix[2:]}{dialogue_turn.content}"
-        if len(history)>MSG_LENGTH:
-            chat_history.append(history[:MSG_LENGTH])
-        else:
-            chat_history.append(history)
-
-    return chat_history
 
 def revise_question(connectionId, requestId, chat, query):    
     global history_length, token_counter_history    
@@ -580,61 +556,6 @@ def revise_question(connectionId, requestId, chat, query):
             
     return revised_question    
     # return revised_question.replace("\n"," ")
-
-def get_revised_question(connectionId, requestId, query):    
-    # check korean
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
-    word_kor = pattern_hangul.search(str(query))
-    print('word_kor: ', word_kor)
-
-    if word_kor and word_kor != 'None':
-        condense_template = """
-        <history>
-        {chat_history}
-        </history>
-
-        Human: <history>를 참조하여, 다음의 <question>의 뜻을 명확히 하는 새로운 질문을 한국어로 생성하세요. 새로운 질문은 원래 질문의 중요한 단어를 반드시 포함합니다.
-
-        <question>            
-        {question}
-        </question>
-            
-        Assistant: 새로운 질문:"""
-    else: 
-        condense_template = """
-        <history>
-        {chat_history}
-        </history>
-        Answer only with the new question.
-
-        Human: using <history>, rephrase the follow up <question> to be a standalone question. The standalone question must have main words of the original question.
-         
-        <quesion>
-        {question}
-        </question>
-
-        Assistant: Standalone question:"""
-
-    print('condense_template: ', condense_template)
-
-    condense_prompt_claude = PromptTemplate.from_template(condense_template)
-        
-    condense_prompt_chain = LLMChain(llm=llm, prompt=condense_prompt_claude)
-
-    chat_history = extract_chat_history_from_memory()
-    try:         
-        revised_question = condense_prompt_chain.run({"chat_history": chat_history, "question": query})
-
-        print('revised_question: '+revised_question)
-
-    except Exception:
-        err_msg = traceback.format_exc()
-        print('error message: ', err_msg)                
-
-        sendErrorMessage(connectionId, requestId, err_msg)        
-        raise Exception ("Not able to request to LLM")    
-    
-    return revised_question
 
 def extract_relevant_doc_for_kendra(query_id, apiType, query_result):
     rag_type = "kendra"
@@ -918,53 +839,37 @@ def check_confidence(query, relevant_docs):
 
     return docs
 
-def get_reference(docs, rag_method, rag_type):
-    if rag_method == 'RetrievalQA' or rag_method == 'ConversationalRetrievalChain':
-        reference = "\n\nFrom\n"
-        for i, doc in enumerate(docs):
-            name = doc.metadata['title']     
-
-            uri = ""
-            if ("document_attributes" in doc.metadata) and ("_source_uri" in doc.metadata['document_attributes']):
-                uri = doc.metadata['document_attributes']['_source_uri']
-                                    
-            if ("document_attributes" in doc.metadata) and ("_excerpt_page_number" in doc.metadata['document_attributes']):
-                page = doc.metadata['document_attributes']['_excerpt_page_number']
-                reference = reference + f'{i+1}. {page}page in <a href={uri} target=_blank>{name}</a>\n'
-            else:
-                reference = reference + f'{i+1}. <a href={uri} target=_blank>{name}</a>\n'
-
-    elif rag_method == 'RetrievalPrompt':
-        reference = "\n\nFrom\n"
-        for i, doc in enumerate(docs):
-            excerpt = str(doc['metadata']['excerpt']).replace('"'," ")
+def get_reference(docs, rag_type):
+    reference = "\n\nFrom\n"
+    for i, doc in enumerate(docs):
+        excerpt = str(doc['metadata']['excerpt']).replace('"'," ")
             
-            if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
-                    uri = doc['metadata']['source']
+        if doc['api_type'] == 'retrieve': # Retrieve. socre of confidence is only avaialbe for English
+            uri = doc['metadata']['source']
+            name = doc['metadata']['title']
+            reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+        else: # Query
+            confidence = doc['confidence']
+            if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
+                excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
+                reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
+            else:
+                uri = ""
+                if "title" in doc['metadata']:
+                    #print('metadata: ', json.dumps(doc['metadata']))
                     name = doc['metadata']['title']
-                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
-            else: # Query
-                confidence = doc['confidence']
-                if ("type" in doc['metadata']) and (doc['metadata']['type'] == "QUESTION_ANSWER"):
-                    excerpt = str(doc['metadata']['excerpt']).replace('"'," ") 
-                    reference = reference + f"{i+1}. <a href=\"#\" onClick=\"alert(`{excerpt}`)\">FAQ ({confidence})</a>\n"
-                else:
-                    uri = ""
-                    if "title" in doc['metadata']:
-                        #print('metadata: ', json.dumps(doc['metadata']))
-                        name = doc['metadata']['title']
-                        if name: 
-                            uri = path+parse.quote(name)
+                    if name: 
+                        uri = path+parse.quote(name)
 
-                    page = ""
-                    if "document_attributes" in doc['metadata']:
-                        if "_excerpt_page_number" in doc['metadata']['document_attributes']:
-                            page = doc['metadata']['document_attributes']['_excerpt_page_number']
+                page = ""
+                if "document_attributes" in doc['metadata']:
+                    if "_excerpt_page_number" in doc['metadata']['document_attributes']:
+                        page = doc['metadata']['document_attributes']['_excerpt_page_number']
                                                 
-                    if page: 
-                        reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
-                    elif uri:
-                        reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                if page: 
+                    reference = reference + f"{i+1}. {page}page in <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
+                elif uri:
+                    reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
         
     return reference
 
@@ -989,108 +894,29 @@ def _get_chat_history(chat_history):
     #print('buffer: ', buffer)
     return buffer
 
-def create_ConversationalRetrievalChain(PROMPT, retriever):  
-    condense_template = """
-        <history>
-        {chat_history}
-        </history>
-        Answer only with the new question.
-
-        Human: using <history>, rephrase the follow up <question> to be a standalone question.
-         
-        <quesion>
-        {question}
-        </question>
-
-        Assistant: Standalone question:"""
-    CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(condense_template)
-        
-    qa = ConversationalRetrievalChain.from_llm(
-        llm=llm, 
-        retriever=retriever,
-        condense_question_prompt=CONDENSE_QUESTION_PROMPT, # chat history and new question
-        combine_docs_chain_kwargs={'prompt': PROMPT},
-
-        memory=memory_chain,
-        get_chat_history=_get_chat_history,
-        verbose=False, # for logging to stdout
-        
-        #max_tokens_limit=300,
-        chain_type='stuff', # 'refine'
-        rephrase_question=True,  # to pass the new generated question to the combine_docs_chain       
-        return_source_documents=True, # retrieved source
-        return_generated_question=False, # generated question
-    )
-
-    return qa
-
-def get_answer_using_RAG(text, rag_type, convType, connectionId, requestId):    
+def get_answer_using_RAG(text, rag_type, connectionId, requestId):    
     reference = ""
-    if rag_method == 'RetrievalQA': # RetrievalQA
-        revised_question = revise_question(connectionId, requestId, chat, text)     
-        print('revised_question: ', revised_question)
     
-        if debugMessageMode=='true':
-            sendDebugMessage(connectionId, requestId, '[Debug]: '+revised_question)
-        PROMPT = get_prompt_template(revised_question, convType)
-        #print('PROMPT: ', PROMPT)
+    revised_question = revise_question(connectionId, requestId, chat, text)     
+    print('revised_question: ', revised_question)
+    
+    if debugMessageMode=='true':
+        sendDebugMessage(connectionId, requestId, '[Debug]: '+revised_question)        
 
-        retriever = kendraRetriever
+    relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
+    print('relevant_docs: ', json.dumps(relevant_docs))
 
-        qa = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-            return_source_documents=True,
-            chain_type_kwargs={"prompt": PROMPT}
-        )
-        isTyping(connectionId, requestId) 
-        result = qa({"query": revised_question})    
-        print('result: ', result)
-        msg = readStreamMsg(connectionId, requestId, result['result'])
-
-        source_documents = result['source_documents']
-        print('source_documents: ', source_documents)
-
-        if len(source_documents)>=1 and enableReference=='true':
-            reference = get_reference(source_documents, rag_method, rag_type)    
-
-    elif rag_method == 'ConversationalRetrievalChain': # ConversationalRetrievalChain
-        PROMPT = get_prompt_template(text, convType)
-        qa = create_ConversationalRetrievalChain(PROMPT, retriever=kendraRetriever)            
-
-        result = qa({"question": text})
+    relevant_context = ""
+    for document in relevant_docs:
+        relevant_context = relevant_context + document['metadata']['excerpt'] + "\n\n"
+    print('relevant_context: ', relevant_context)
         
-        msg = result['answer']
-        print('\nquestion: ', result['question'])    
-        print('answer: ', result['answer'])    
-        # print('chat_history: ', result['chat_history'])    
-        print('source_documents: ', result['source_documents']) 
+    # query using RAG context
+    msg = query_using_RAG_context(connectionId, requestId, chat, relevant_context, revised_question)
 
-        if len(result['source_documents'])>=1 and enableReference=='true':
-            reference = get_reference(result['source_documents'], rag_method, rag_type)
-    
-    elif rag_method == 'RetrievalPrompt': # RetrievalPrompt
-        revised_question = revise_question(connectionId, requestId, chat, text)     
-        print('revised_question: ', revised_question)
-    
-        if debugMessageMode=='true':
-            sendDebugMessage(connectionId, requestId, '[Debug]: '+revised_question)        
-
-        relevant_docs = retrieve_from_Kendra(query=revised_question, top_k=top_k)
-        print('relevant_docs: ', json.dumps(relevant_docs))
-
-        relevant_context = ""
-        for document in relevant_docs:
-            relevant_context = relevant_context + document['metadata']['excerpt'] + "\n\n"
-        print('relevant_context: ', relevant_context)
-        
-        # query using RAG context
-        msg = query_using_RAG_context(connectionId, requestId, chat, relevant_context, revised_question)
-
-        reference = ""
-        if len(relevant_docs)>=1 and enableReference=='true':
-            reference = get_reference(relevant_docs, rag_method, rag_type)
+    reference = ""
+    if len(relevant_docs)>=1 and enableReference=='true':
+        reference = get_reference(relevant_docs, rag_type)
 
     return msg, reference
 
@@ -1137,23 +963,6 @@ def query_using_RAG_context(connectionId, requestId, chat, context, revised_ques
         sendErrorMessage(connectionId, requestId, err_msg)    
         raise Exception ("Not able to request to LLM")
 
-    return msg
-
-def get_answer_from_PROMPT(text, convType, connectionId, requestId):
-    PROMPT = get_prompt_template(text, convType)
-    #print('PROMPT: ', PROMPT)
-
-    try: 
-        isTyping(connectionId, requestId) 
-        stream = llm(PROMPT.format(input=text))
-        msg = readStreamMsg(connectionId, requestId, stream)
-    except Exception:
-        err_msg = traceback.format_exc()
-        print('error message: ', err_msg)        
-        
-        sendErrorMessage(connectionId, requestId, err_msg)    
-        raise Exception ("Not able to request to LLM")    
-    
     return msg
 
 def create_metadata(bucket, key, meta_prefix, s3_prefix, uri, category, documentId):    
@@ -1210,7 +1019,7 @@ def getResponse(connectionId, jsonBody):
     convType = jsonBody['convType']  # conversation type
     print('Conversation Type: ', convType)
 
-    global llm, modelId, enableReference, rag_type, conversation
+    global modelId, enableReference, rag_type
     global parameters, map_chain, memory_chain, debugMessageMode
     
     # allocate memory
@@ -1281,8 +1090,8 @@ def getResponse(connectionId, jsonBody):
                 if convType == 'normal':      # normal 
                     msg = general_conversation(connectionId, requestId, chat, text)   
                 elif convType == 'qa':   # question & answering
-                    print(f'rag_type: {rag_type}, rag_method: {rag_method}')                          
-                    msg, reference = get_answer_using_RAG(text, rag_type, convType, connectionId, requestId)                     
+                    print(f'rag_type: {rag_type}')                          
+                    msg, reference = get_answer_using_RAG(text, rag_type, connectionId, requestId)                     
                 
         elif type == 'document':
             object = body
@@ -1292,12 +1101,13 @@ def getResponse(connectionId, jsonBody):
 
             if file_type == 'csv':
                 docs = load_csv_document(object)
-                texts = []
+                
+                contexts = []
                 for doc in docs:
-                    texts.append(doc.page_content)
-                print('texts: ', texts)
+                    contexts.append(doc.page_content)
+                print('contexts: ', contexts)
 
-                msg = get_summary(texts)
+                msg = get_summary(chat, contexts)
 
             elif file_type == 'pdf' or file_type == 'txt':
                 texts = load_document(file_type, object)
@@ -1317,7 +1127,10 @@ def getResponse(connectionId, jsonBody):
                 print('docs[0]: ', docs[0])    
                 print('docs size: ', len(docs))
 
-                msg = get_summary(texts)
+                contexts = []
+                for doc in docs:
+                    contexts.append(doc.page_content)
+                print('contexts: ', contexts)
             else:
                 msg = "uploaded file: "+object
                                 

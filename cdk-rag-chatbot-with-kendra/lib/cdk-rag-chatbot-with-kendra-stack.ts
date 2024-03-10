@@ -25,7 +25,6 @@ const bedrock_region = "us-west-2";  // "us-east-1" "us-west-2"
 let kendra_region = process.env.CDK_DEFAULT_REGION; 
 
 const rag_type = 'kendra';  // faiss, opensearch, kendra
-const rag_method = 'RetrievalPrompt' // RetrievalPrompt, RetrievalQA, ConversationalRetrievalChain
 
 const enableReference = 'true';
 const debugMessageMode = 'false'; // if true, debug messages will be delivered to the client.
@@ -490,7 +489,6 @@ export class CdkRagChatbotWithKendraStack extends cdk.Stack {
         kendraIndex: kendraIndex,
         roleArn: roleLambdaWebsocket.roleArn,
         debugMessageMode: debugMessageMode,
-        rag_method: rag_method,
         numberOfRelevantDocs: numberOfRelevantDocs
       }
     });
