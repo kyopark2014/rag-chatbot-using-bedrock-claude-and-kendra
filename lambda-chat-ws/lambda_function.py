@@ -84,7 +84,7 @@ chat = BedrockChat(
     model_kwargs=parameters,
 )   
 
-map_chain = dict() # For RAG
+map_chain = dict() 
 
 kendraRetriever = AmazonKendraRetriever(
     index_id=kendraIndex, 
