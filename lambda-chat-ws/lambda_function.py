@@ -110,6 +110,15 @@ def sendMessage(id, body):
         err_msg = traceback.format_exc()
         print('err_msg: ', err_msg)
         raise Exception ("Not able to send a message")
+
+def sendResultMessage(connectionId, requestId, msg):    
+    result = {
+        'request_id': requestId,
+        'msg': msg,
+        'status': 'completed'
+    }
+    #print('debug: ', json.dumps(debugMsg))
+    sendMessage(connectionId, result)    
     
 def sendDebugMessage(connectionId, requestId, msg):
     debugMsg = {
@@ -1147,7 +1156,10 @@ def getResponse(connectionId, jsonBody):
 
                 meta_prefix = "metadata"
                 create_metadata(bucket=s3_bucket, key=object, meta_prefix=meta_prefix, s3_prefix=s3_prefix, uri=path+parse.quote(object), category=category, documentId=documentId)
-                                                                
+                 
+        sendResultMessage(connectionId, requestId, msg+reference)
+        # print('msg+reference: ', msg+reference)
+                                                       
         elapsed_time = int(time.time()) - start
         print("total run time(sec): ", elapsed_time)        
         # print('msg+reference: ', msg+reference)
