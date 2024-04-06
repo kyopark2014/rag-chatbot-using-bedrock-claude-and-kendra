@@ -557,6 +557,39 @@ def get_reference(docs, rag_type):
                     reference = reference + f"{i+1}. <a href={uri} target=_blank>{name} ({doc['assessed_score']})</a>, <a href=\"#\" onClick=\"alert(`{excerpt}`)\">관련문서</a>\n"
 ```
 
+## S3를 이용한 문서 동기화
+
+S3를 이용해 문서 동기화시 meta file을 생성합니다. S3 data source를 지정할때 사용한 bucket과 S3 prefix 폴더에 인덱싱을 하려는 파일과 같은 이름을 가져야 합니다. 또한, 파일 이름은 "metadata.json"로 된 접미사를 가지고 있어야 합니다. 이를 구현하면 아래와 같습니다.
+
+```python
+def create_metadata(bucket, key, meta_prefix, s3_prefix, uri, category, documentId):    
+    title = key
+    timestamp = int(time.time())
+
+    metadata = {
+        "Attributes": {
+            "_category": category,
+            "_source_uri": uri,
+            "_version": str(timestamp),
+        },
+        "Title": title,
+        "DocumentId": documentId,        
+    }
+    print('metadata: ', metadata)
+
+    client = boto3.client('s3')
+    try: 
+        client.put_object(
+            Body=json.dumps(metadata), 
+            Bucket=bucket, 
+            Key=meta_prefix+'/'+s3_prefix+'/'+key+'.metadata.json' 
+        )
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)        
+        raise Exception ("Not able to create meta file")
+```
+
 ## 직접 실습 해보기
 
 ### 사전 준비 사항
